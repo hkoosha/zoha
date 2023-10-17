@@ -9,7 +9,9 @@ use eyre::Result;
 use gtk::Application;
 use gtk::prelude::ApplicationExt;
 use gtk::prelude::ApplicationExtManual;
+use log::debug;
 
+use config::cfg::read_cfg_content;
 use zoha::config;
 use zoha::config::args::ZohaArgs;
 use zoha::config::cfg::ZohaCfg;
@@ -40,7 +42,7 @@ fn main() -> Result<()> {
         let att =
             "============================== ATTENTION ======================================";
         let line =
-            "===============================================================================" ;
+            "===============================================================================";
 
         println!("{}", &att);
         println!("{}", &line);
@@ -67,7 +69,18 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let cfg_content: String = config::cfg::read_cfg_content(&args)?;
+    let cfg_content: String = match read_cfg_content(&args) {
+        Ok(config) => Ok(config),
+        Err(err) => {
+            if err.is_no_config() {
+                debug!("no config specified, fallback to defaults");
+                Ok("".to_string())
+            } else {
+                Err(err)
+            }
+        }
+    }?;
+
     let cfg: ZohaCfg = ZohaCfg::from_toml(&cfg_content);
     let cfg: Rc<ZohaCfg> = Rc::new(cfg);
 

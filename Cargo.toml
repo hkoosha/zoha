@@ -1,6 +1,6 @@
 [package]
 name = "zoha"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 authors = ["Koosha Hosseiny <i@koosha.io>"]
 description = "A drop down terminal inspired by Tilda"
