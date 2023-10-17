@@ -1143,6 +1143,12 @@ pub enum CfgReadError {
     },
 }
 
+impl CfgReadError {
+    pub fn is_no_config(&self) -> bool {
+        return matches!(&self, CfgReadError::NoConfigInHomeDir {..});
+    }
+}
+
 fn do_read_cfg(cfg_location: &Path) -> Result<String, CfgReadError> {
     return match fs::read_to_string(cfg_location) {
         Ok(content) => Ok(content),
