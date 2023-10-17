@@ -1,9 +1,9 @@
 [package]
 name = "zoha"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["Koosha Hosseiny <i@koosha.io>"]
-description = "A pull down terminal inspired by Tilda"
+description = "A drop down terminal inspired by Tilda"
 homepage = "https://zoha.rs"
 license = "GPL-3.0"
 readme = "README.md"
