@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use gdk::EventMask;
 use glib::Cast;
@@ -142,7 +142,7 @@ pub fn create_notebook(ctx: &mut ZohaCtx) {
     }
 }
 
-pub fn on_page_reorder(ctx: &Rc<RefCell<ZohaCtx>>,
+pub fn on_page_reorder(ctx: &Arc<RefCell<ZohaCtx>>,
                        child: &Widget,
                        new_position: u32) {
     let child = match child.downcast_ref::<gtk::Box>() {
@@ -192,7 +192,7 @@ pub fn on_page_reorder(ctx: &Rc<RefCell<ZohaCtx>>,
     ctx.borrow().terminals.borrow_mut().extend(new_order);
 }
 
-pub fn on_page_removed(ctx: &Rc<RefCell<ZohaCtx>>,
+pub fn on_page_removed(ctx: &Arc<RefCell<ZohaCtx>>,
                        page: u32) {
     debug!("page removed: {}", page);
 
@@ -218,7 +218,7 @@ pub fn on_page_removed(ctx: &Rc<RefCell<ZohaCtx>>,
     terminals.extend(adjusted);
 }
 
-pub fn remove_page_by_hbox(ctx: &Rc<RefCell<ZohaCtx>>,
+pub fn remove_page_by_hbox(ctx: &Arc<RefCell<ZohaCtx>>,
                            hbox: &gtk::Box) {
     let page: Option<u32> = match ctx.borrow().get_notebook() {
         None => {
@@ -254,11 +254,11 @@ pub fn remove_page_by_hbox(ctx: &Rc<RefCell<ZohaCtx>>,
     }
 }
 
-pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>,
+pub fn add_tab(ctx: &Arc<RefCell<ZohaCtx>>,
                grab_focus: bool) {
     trace!("tab_add, focus: {}", grab_focus);
 
-    let term = ZohaTerminal::new(Rc::clone(ctx));
+    let term = ZohaTerminal::new(Arc::clone(ctx));
 
     let (idx, dir) = match ctx.borrow().get_notebook() {
         None => {
@@ -340,7 +340,7 @@ pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>,
     }
 }
 
-pub fn close_tab(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn close_tab(ctx: &Arc<RefCell<ZohaCtx>>) {
     trace!("clos_tab");
 
     if let Some(mut term) = get_term(ctx, "close_tab") {
@@ -348,15 +348,15 @@ pub fn close_tab(ctx: &Rc<RefCell<ZohaCtx>>) {
     }
 }
 
-pub fn move_backward(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn move_backward(ctx: &Arc<RefCell<ZohaCtx>>) {
     move_tab(ctx, false);
 }
 
-pub fn move_forward(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn move_forward(ctx: &Arc<RefCell<ZohaCtx>>) {
     move_tab(ctx, true);
 }
 
-pub fn move_tab(ctx: &Rc<RefCell<ZohaCtx>>,
+pub fn move_tab(ctx: &Arc<RefCell<ZohaCtx>>,
                 fwd: bool) {
     trace!("move tab, fwd: {}", fwd);
 
@@ -399,7 +399,7 @@ pub fn move_tab(ctx: &Rc<RefCell<ZohaCtx>>,
     ctx.borrow().get_notebook().unwrap().reorder_child(&page, Some(new_index));
 }
 
-pub fn goto_next(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn goto_next(ctx: &Arc<RefCell<ZohaCtx>>) {
     trace!("goto_next");
 
     match ctx.borrow().get_notebook() {
@@ -410,7 +410,7 @@ pub fn goto_next(ctx: &Rc<RefCell<ZohaCtx>>) {
     }
 }
 
-pub fn goto_previous(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn goto_previous(ctx: &Arc<RefCell<ZohaCtx>>) {
     trace!("goto_previous");
 
     match ctx.borrow().get_notebook() {
@@ -421,7 +421,7 @@ pub fn goto_previous(ctx: &Rc<RefCell<ZohaCtx>>) {
     }
 }
 
-pub fn goto_last(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn goto_last(ctx: &Arc<RefCell<ZohaCtx>>) {
     trace!("goto_last");
 
     match ctx.borrow().get_notebook() {
@@ -433,7 +433,7 @@ pub fn goto_last(ctx: &Rc<RefCell<ZohaCtx>>) {
     }
 }
 
-pub fn goto_n(ctx: &Rc<RefCell<ZohaCtx>>,
+pub fn goto_n(ctx: &Arc<RefCell<ZohaCtx>>,
               n: usize) {
     trace!("goto_n: {}", n);
 
@@ -447,7 +447,7 @@ pub fn goto_n(ctx: &Rc<RefCell<ZohaCtx>>,
     }
 }
 
-pub fn adjust_tab_bar(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn adjust_tab_bar(ctx: &Arc<RefCell<ZohaCtx>>) {
     match ctx.borrow().get_notebook() {
         None => eprintln!("missing notebook on adjust tabs"),
         Some(notebook) => {
@@ -487,7 +487,7 @@ pub fn adjust_tab_bar(ctx: &Rc<RefCell<ZohaCtx>>) {
     };
 }
 
-pub fn copy(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn copy(ctx: &Arc<RefCell<ZohaCtx>>) {
     trace!("copy");
 
     if let Some(zt) = get_term(ctx, "copy") {
@@ -495,7 +495,7 @@ pub fn copy(ctx: &Rc<RefCell<ZohaCtx>>) {
     }
 }
 
-pub fn paste(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn paste(ctx: &Arc<RefCell<ZohaCtx>>) {
     trace!("paste");
 
     if let Some(zt) = get_term(ctx, "paste") {
@@ -503,7 +503,7 @@ pub fn paste(ctx: &Rc<RefCell<ZohaCtx>>) {
     };
 }
 
-pub fn toggle_transparency(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn toggle_transparency(ctx: &Arc<RefCell<ZohaCtx>>) {
     let en = ctx.borrow().transparency_enabled;
     ctx.borrow_mut().transparency_enabled = !en;
 
@@ -519,7 +519,7 @@ pub fn toggle_transparency(ctx: &Rc<RefCell<ZohaCtx>>) {
         });
 }
 
-pub fn font_inc(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn font_inc(ctx: &Arc<RefCell<ZohaCtx>>) {
     trace!("font_inc");
 
     ctx
@@ -536,7 +536,7 @@ pub fn font_inc(ctx: &Rc<RefCell<ZohaCtx>>) {
         });
 }
 
-pub fn font_dec(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn font_dec(ctx: &Arc<RefCell<ZohaCtx>>) {
     trace!("font_dec");
 
     ctx
@@ -553,7 +553,7 @@ pub fn font_dec(ctx: &Rc<RefCell<ZohaCtx>>) {
         });
 }
 
-pub fn font_reset(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn font_reset(ctx: &Arc<RefCell<ZohaCtx>>) {
     trace!("font_reset");
 
     ctx
@@ -570,7 +570,7 @@ pub fn font_reset(ctx: &Rc<RefCell<ZohaCtx>>) {
         });
 }
 
-fn get_term(ctx: &Rc<RefCell<ZohaCtx>>,
+fn get_term(ctx: &Arc<RefCell<ZohaCtx>>,
             action: &'_ str) -> Option<ZohaTerminal> {
     let active_page: u32 = match ctx
         .borrow()
@@ -602,7 +602,7 @@ fn get_term(ctx: &Rc<RefCell<ZohaCtx>>,
     return term;
 }
 
-fn set_label(ctx: &Rc<RefCell<ZohaCtx>>,
+fn set_label(ctx: &Arc<RefCell<ZohaCtx>>,
              term: &ZohaTerminal,
              idx: u32) {
     trace!("set_label, idx={}", idx);

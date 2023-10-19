@@ -9,13 +9,18 @@ pub struct ZohaArgs {
 
     /// Disable listening on dbus for keypress.
     #[arg(short, long, default_value_t = false)]
-    #[cfg(feature = "hack")]
+    #[cfg(all(feature = "hack"))]
     pub keypress_grabber: bool,
 
     /// List keys accepted by keypress grabber.
     #[arg(long, default_value_t = false)]
-    #[cfg(feature = "hack")]
+    #[cfg(all(feature = "hack"))]
     pub list_key_grabber_keys: bool,
+
+    /// Enable native key listener.
+    #[arg(short, long, default_value_t = true)]
+    #[cfg(all(target_os = "macos"))]
+    pub listener: bool,
 
     /// Signal Zoha to toggle visibility and exit.
     #[arg(short, long, default_value_t = false)]
@@ -41,3 +46,4 @@ pub struct ZohaArgs {
     #[arg(long, default_value_t = false)]
     pub print_pallets: bool,
 }
+
