@@ -2,7 +2,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use gdk::EventMask;
+use gdk::{EventMask, FullscreenMode};
+use gdk::prelude::WindowExtManual;
 use glib::Cast;
 use gtk::Application;
 use gtk::ApplicationWindow;

@@ -148,8 +148,9 @@ fn main() -> Result<()> {
         #[cfg(target_os = "macos")]
         if args.listener {
             debug!("enabling native key listener");
-            mac_grabber::macos_key_grabber();
             CTX = Some(Arc::clone(&ctx));
+            mac_hacks::macos_key_grabber();
+            mac_hacks::macos_window();
         } else {
             trace!("not enabling native key listener");
             CTX = None;
@@ -162,13 +163,16 @@ fn main() -> Result<()> {
 }
 
 #[cfg(target_os = "macos")]
-mod mac_grabber {
+mod mac_hacks {
     use std::ffi::c_void;
     use std::ptr;
 
+    use cacao::appkit::{App, AppDelegate};
+    use cacao::foundation::YES;
+    use cacao::objc::{class, msg_send, sel, sel_impl};
     use libc::c_int;
 
-    use zoha::toggle;
+    use zoha::{macos_screens, toggle};
 
     #[repr(C)]
     struct EventTypeSpec {
@@ -183,17 +187,17 @@ mod mac_grabber {
     }
 
     #[repr(C)]
-    pub struct OpaqueCStruct8Hack {
+    struct OpaqueCStruct8Hack {
         _private: [u8; 8],
     }
 
     #[repr(C)]
-    pub struct OpaqueCStructBigHack {
+    struct OpaqueCStructBigHack {
         _private: [u8; 1024],
     }
 
     impl OpaqueCStructBigHack {
-        pub fn new() -> OpaqueCStructBigHack {
+        fn new() -> OpaqueCStructBigHack {
             Self {
                 _private: [0; 1024],
             }
@@ -240,6 +244,8 @@ mod mac_grabber {
             } else {
                 eprint!("missing context on toggle");
             }
+
+            macos_screens();
         }
         return 0;
     }
@@ -284,4 +290,21 @@ mod mac_grabber {
             panic!("failed to register event hot key");
         }
     }
+
+    #[derive(Default)]
+    struct ZohaApp;
+
+    impl AppDelegate for ZohaApp {}
+
+    pub unsafe fn macos_window() {
+        let mut app: App<ZohaApp> = App::new(
+            "io.koosha.zoha",
+            ZohaApp::default(),
+        );
+
+        let _: () = msg_send![app.objc, activateIgnoringOtherApps: YES];
+
+        macos_screens();
+    }
+
 }

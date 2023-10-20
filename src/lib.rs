@@ -7,6 +7,8 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::fmt::Formatter;
 use std::sync::Arc;
+use cacao::foundation::id;
+use cacao::objc::{class, msg_send, sel, sel_impl};
 
 use eyre::ContextCompat;
 use eyre::eyre;
@@ -257,6 +259,8 @@ pub fn toggle(ctx: &Arc<RefCell<ZohaCtx>>) {
         window.present();
         ctx.showing = true;
     }
+
+    unsafe { macos_screens(); }
 }
 
 #[cfg(target_os = "linux")]
@@ -604,3 +608,25 @@ pub fn print_pallets() {
         println!("[14] = {}", pallet.colors()[14]);
     }
 }
+
+pub unsafe fn macos_screens() {
+    // NSWindowCollectionBehaviorCanJoinAllSpaces and friends
+    let mask = 1 | (1 << 6) | (1 << 8);
+
+    let shared: id = msg_send![class!(NSApplication), sharedApplication];
+    println!("shared {:?}", shared);
+
+    let windows: id = msg_send![shared, windows];
+    println!("windows {:?}", windows);
+
+    let window: id = msg_send![windows, firstObject];
+    println!("first {:?}", window);
+
+    if !window.is_null() {
+        let _: () = msg_send![window, setCollectionBehavior:mask];
+    }
+    else {
+        eprintln!("no window")
+    }
+}
+

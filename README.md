@@ -260,3 +260,4 @@ zoha --dry-run
 # OR
 zoha --dry-run -k
 ```
+atk pango gtk+3 vte3
