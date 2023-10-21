@@ -27,10 +27,12 @@ use crate::toggle;
 use crate::ui::terminal::ZohaTerminal;
 use crate::ZohaCtx;
 
-pub fn create_application(ctx: &Rc<RefCell<ZohaCtx>>) -> ApplicationBuilder {
+pub const APPLICATION_ID: &str = "io.koosha.zoha";
+
+pub fn create_application() -> ApplicationBuilder {
     trace!("create app");
     let application: ApplicationBuilder = Application::builder()
-        .application_id(&ctx.borrow().cfg.process.application_id)
+        .application_id(APPLICATION_ID)
         ;
 
     return application;
@@ -172,20 +174,17 @@ pub fn on_page_reorder(ctx: &Rc<RefCell<ZohaCtx>>,
     let move_bkw = !move_fwd;
 
     for (idx, term) in ctx.borrow().terminals.borrow_mut().drain() {
-        if idx < old_idx && idx < new_position {
-            set_label(&ctx, &term, idx);
-            new_order.insert(idx, term);
-        } else if old_idx < idx && new_position < idx {
-            set_label(&ctx, &term, idx);
+        if idx < old_idx && idx < new_position || old_idx < idx && new_position < idx {
+            set_label(ctx, &term, idx);
             new_order.insert(idx, term);
         } else if move_fwd && old_idx != idx {
-            set_label(&ctx, &term, idx - 1);
+            set_label(ctx, &term, idx - 1);
             new_order.insert(idx - 1, term);
         } else if move_bkw && old_idx != idx {
-            set_label(&ctx, &term, idx + 1);
+            set_label(ctx, &term, idx + 1);
             new_order.insert(idx + 1, term);
         } else {
-            set_label(&ctx, &term, new_position);
+            set_label(ctx, &term, new_position);
             new_order.insert(new_position, term);
         }
     }
@@ -202,7 +201,6 @@ pub fn on_page_removed(ctx: &Rc<RefCell<ZohaCtx>>,
 
     let adjusted: HashMap<_, _> = terminals
         .drain()
-        .into_iter()
         .map(|(id, term)| {
             let new_idx: u32 = if id < page {
                 id
@@ -345,7 +343,7 @@ pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>,
 pub fn close_tab(ctx: &Rc<RefCell<ZohaCtx>>) {
     trace!("clos_tab");
 
-    if let Some(mut term) = get_term(&ctx, "close_tab") {
+    if let Some(mut term) = get_term(ctx, "close_tab") {
         term.kill();
     }
 }
@@ -492,7 +490,7 @@ pub fn adjust_tab_bar(ctx: &Rc<RefCell<ZohaCtx>>) {
 pub fn copy(ctx: &Rc<RefCell<ZohaCtx>>) {
     trace!("copy");
 
-    if let Some(zt) = get_term(&ctx, "copy") {
+    if let Some(zt) = get_term(ctx, "copy") {
         zt.copy();
     }
 }
@@ -500,7 +498,7 @@ pub fn copy(ctx: &Rc<RefCell<ZohaCtx>>) {
 pub fn paste(ctx: &Rc<RefCell<ZohaCtx>>) {
     trace!("paste");
 
-    if let Some(zt) = get_term(&ctx, "paste") {
+    if let Some(zt) = get_term(ctx, "paste") {
         zt.paste();
     };
 }
@@ -572,8 +570,8 @@ pub fn font_reset(ctx: &Rc<RefCell<ZohaCtx>>) {
         });
 }
 
-fn get_term<'a>(ctx: &'a Rc<RefCell<ZohaCtx>>,
-                action: &'_ str) -> Option<ZohaTerminal> {
+fn get_term(ctx: &Rc<RefCell<ZohaCtx>>,
+            action: &'_ str) -> Option<ZohaTerminal> {
     let active_page: u32 = match ctx
         .borrow()
         .get_notebook() {
@@ -626,7 +624,7 @@ fn set_label(ctx: &Rc<RefCell<ZohaCtx>>,
                             &format!("[{}] - {}@{}", idx, term.tab_counter, cwd.as_str()),
                         ),
                         Some(chars) => {
-                            if cwd.len() <= chars.abs() as usize {
+                            if cwd.len() <= chars.unsigned_abs() as usize {
                                 notebook.set_tab_label_text(
                                     &term.hbox,
                                     &format!(
@@ -634,30 +632,28 @@ fn set_label(ctx: &Rc<RefCell<ZohaCtx>>,
                                         idx, term.tab_counter, cwd.as_str(),
                                     ),
                                 )
+                            } else if chars > 0 {
+                                notebook.set_tab_label_text(
+                                    &term.hbox,
+                                    &format!(
+                                        "[{}] - {}@{}",
+                                        idx,
+                                        term.tab_counter,
+                                        &cwd
+                                            .as_str()
+                                            [(cwd.len() - (chars.unsigned_abs() as usize))..cwd.len()],
+                                    ),
+                                );
                             } else {
-                                if chars > 0 {
-                                    notebook.set_tab_label_text(
-                                        &term.hbox,
-                                        &format!(
-                                            "[{}] - {}@{}",
-                                            idx,
-                                            term.tab_counter,
-                                            &cwd
-                                                .as_str()
-                                                [(cwd.len() - (chars.abs() as usize))..cwd.len()],
-                                        ),
-                                    );
-                                } else {
-                                    notebook.set_tab_label_text(
-                                        &term.hbox,
-                                        &format!(
-                                            "[{}] - {}@{}",
-                                            idx,
-                                            term.tab_counter,
-                                            &cwd.as_str()[0..(chars.abs() as usize)],
-                                        ),
-                                    );
-                                }
+                                notebook.set_tab_label_text(
+                                    &term.hbox,
+                                    &format!(
+                                        "[{}] - {}@{}",
+                                        idx,
+                                        term.tab_counter,
+                                        &cwd.as_str()[0..(chars.unsigned_abs() as usize)],
+                                    ),
+                                );
                             }
                         }
                     }

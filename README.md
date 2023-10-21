@@ -2,7 +2,7 @@ Drop down terminal inspired by Tilda.
 
 ```
 $ zoha -h
-A pull down terminal inspired by Tilda
+A drop down terminal inspired by Tilda
 
 Usage: zoha [OPTIONS]
 

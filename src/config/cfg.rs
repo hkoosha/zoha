@@ -1,5 +1,6 @@
 use std::cmp::{max, min};
 use std::collections::HashSet;
+use std::fmt::{Display, Formatter};
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
@@ -28,6 +29,16 @@ pub enum TabMode {
     Auto,
 }
 
+impl Display for TabMode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TabMode::Always => write!(f, "Always"),
+            TabMode::Never => write!(f, "Never"),
+            TabMode::Auto => write!(f, "Auto"),
+        }
+    }
+}
+
 
 #[derive(Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TabPosition {
@@ -35,6 +46,17 @@ pub enum TabPosition {
     Right,
     Top,
     Bottom,
+}
+
+impl Display for TabPosition {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TabPosition::Left => write!(f, "Left"),
+            TabPosition::Right => write!(f, "Right"),
+            TabPosition::Top => write!(f, "Top"),
+            TabPosition::Bottom => write!(f, "Bottom"),
+        }
+    }
 }
 
 impl TabPosition {
@@ -56,6 +78,16 @@ pub enum CursorShape {
     Underline,
 }
 
+impl Display for CursorShape {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CursorShape::Block => write!(f, "Block"),
+            CursorShape::IBeam => write!(f, "IBeam"),
+            CursorShape::Underline => write!(f, "Underline"),
+        }
+    }
+}
+
 impl CursorShape {
     pub fn to_vte(&self) -> zoha_vte::CursorShape {
         match self {
@@ -73,6 +105,18 @@ pub enum EraseBinding {
     AsciiDelete,
     DeleteSequence,
     Tty,
+}
+
+impl Display for EraseBinding {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EraseBinding::Auto => write!(f, "Auto"),
+            EraseBinding::AsciiBackspace => write!(f, "AsciiBackspace"),
+            EraseBinding::AsciiDelete => write!(f, "AsciiDelete"),
+            EraseBinding::DeleteSequence => write!(f, "DeleteSequence"),
+            EraseBinding::Tty => write!(f, "Tty"),
+        }
+    }
 }
 
 impl EraseBinding {
@@ -95,6 +139,16 @@ pub enum ScrollbarPosition {
     Hidden,
 }
 
+impl Display for ScrollbarPosition {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ScrollbarPosition::Left => write!(f, "Left"),
+            ScrollbarPosition::Right => write!(f, "Right"),
+            ScrollbarPosition::Hidden => write!(f, "Hidden"),
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TerminalExitBehavior {
     // TODO: implement:
@@ -106,6 +160,14 @@ pub enum TerminalExitBehavior {
     ExitTerminal,
 }
 
+impl Display for TerminalExitBehavior {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TerminalExitBehavior::ExitTerminal => write!(f, "ExitTerminal"),
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum LastTabExitBehavior {
     RestartTerminal,
@@ -113,12 +175,21 @@ pub enum LastTabExitBehavior {
     Exit,
 }
 
+impl Display for LastTabExitBehavior {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LastTabExitBehavior::RestartTerminal => write!(f, "RestartTermianl"),
+            LastTabExitBehavior::RestartTerminalAndHide => write!(f, "RestartTerminalAndHide"),
+            LastTabExitBehavior::Exit => write!(f, "Exit"),
+        }
+    }
+}
+
 // =============================================================================
 // TODO combine Raw & Cfg once I learn how to deserialize external types.
 
 #[derive(Deserialize, Debug, Default)]
 struct RawCfgProcess {
-    pub application_id: Option<String>,
     pub command: Option<String>,
     pub working_dir: Option<String>,
 }
@@ -206,7 +277,6 @@ struct RawCfgKey {
 #[derive(Deserialize, Debug, Default)]
 struct RawCfgTerminal {
     allow_hyper_link: Option<bool>,
-    allow_bold: Option<bool>,
     audible_bell: Option<bool>,
     cursor_blink: Option<bool>,
     cursor_shape: Option<CursorShape>,
@@ -223,7 +293,7 @@ struct RawCfgTerminal {
 struct RawCfgBehavior {
     terminal_exit_behavior: Option<TerminalExitBehavior>,
     last_tab_exit_behavior: Option<LastTabExitBehavior>,
-    prompt_on_exit: Option<bool>,
+    // prompt_on_exit: Option<bool>,
 }
 
 #[cfg(feature = "hack")]
@@ -257,7 +327,6 @@ struct RawCfg {
 
 #[derive(Deserialize, Debug, Default)]
 pub struct CfgProcess {
-    pub application_id: String,
     pub command: String,
     pub working_dir: Option<String>,
 }
@@ -567,7 +636,6 @@ pub struct CfgKey {
 #[derive(Debug)]
 pub struct CfgTerminal {
     pub allow_hyper_link: bool,
-    pub allow_bold: bool,
     pub audible_bell: bool,
     pub cursor_blink: bool,
     pub cursor_shape: CursorShape,
@@ -593,7 +661,7 @@ impl CfgTerminal {
 pub struct CfgBehavior {
     pub terminal_exit_behavior: TerminalExitBehavior,
     pub last_tab_exit_behavior: LastTabExitBehavior,
-    pub prompt_on_exit: bool,
+    // pub prompt_on_exit: bool,
 }
 
 #[cfg(feature = "hack")]
@@ -632,10 +700,8 @@ mod defaults {
     pub(super) const FG_COLOR: &str = "rgba(255,255,255,1.0)";
     pub(super) const CURSOR_COLOR: &str = "rgba(0,0,0,1.0)";
     pub(super) const TITLE: &str = "Zoha";
-    pub(super) const APP_ID: &str = "io.koosha.zoha";
     pub(super) const CURSOR_BLINK: bool = false;
     pub(super) const ALLOW_HYPERLINK: bool = true;
-    pub(super) const ALLOW_BOLD: bool = true;
     pub(super) const AUDIBLE_BELL: bool = false;
     pub(super) const SCROLL_ON_KEYSTROKE: bool = true;
     pub(super) const SCROLL_ON_OUTPUT: bool = false;
@@ -644,7 +710,7 @@ mod defaults {
     pub(super) const WORD_CHARS: &str = "-A-Za-z0-9,./?%&#:_";
     pub(super) const TAB_EXPAND: bool = false;
     pub(super) const TAB_NUM_CHARS: i8 = 25;
-    pub(super) const PROMPT_ON_EXIT: bool = false;
+    // pub(super) const PROMPT_ON_EXIT: bool = false;
 
     pub(super) const TOGGLE_KEYCODE: &str = "F1";
 
@@ -847,8 +913,6 @@ impl ZohaCfg {
                         ),
                     },
                     process: CfgProcess {
-                        application_id: raw.process.application_id
-                            .unwrap_or_else(|| APP_ID.to_string()),
                         command: raw.process.command
                             .map(|it| shell(Some(it)))
                             .unwrap_or_else(|| shell(None)),
@@ -969,8 +1033,6 @@ impl ZohaCfg {
                     terminal: CfgTerminal {
                         allow_hyper_link: raw.terminal.allow_hyper_link
                             .unwrap_or(ALLOW_HYPERLINK),
-                        allow_bold: raw.terminal.allow_bold
-                            .unwrap_or(ALLOW_BOLD),
                         audible_bell: raw.terminal.audible_bell
                             .unwrap_or(AUDIBLE_BELL),
                         cursor_blink: raw.terminal.cursor_blink
@@ -997,8 +1059,8 @@ impl ZohaCfg {
                             .unwrap_or(TerminalExitBehavior::ExitTerminal),
                         last_tab_exit_behavior: raw.behavior.last_tab_exit_behavior
                             .unwrap_or(LastTabExitBehavior::RestartTerminal),
-                        prompt_on_exit: raw.behavior.prompt_on_exit
-                            .unwrap_or(PROMPT_ON_EXIT),
+                        // prompt_on_exit: raw.behavior.prompt_on_exit
+                        //     .unwrap_or(PROMPT_ON_EXIT),
                     },
                     #[cfg(feature = "hack")]
                     hack: CfgHack {
@@ -1065,7 +1127,6 @@ impl Default for ZohaCfg {
                 color_15: None,
             },
             process: CfgProcess {
-                application_id: APP_ID.to_string(),
                 command: shell(None),
                 working_dir: None,
             },
@@ -1095,7 +1156,6 @@ impl Default for ZohaCfg {
             },
             terminal: CfgTerminal {
                 allow_hyper_link: ALLOW_HYPERLINK,
-                allow_bold: ALLOW_BOLD,
                 audible_bell: AUDIBLE_BELL,
                 cursor_blink: CURSOR_BLINK,
                 cursor_shape: CursorShape::Block,
@@ -1110,7 +1170,7 @@ impl Default for ZohaCfg {
             behavior: CfgBehavior {
                 terminal_exit_behavior: TerminalExitBehavior::ExitTerminal,
                 last_tab_exit_behavior: LastTabExitBehavior::RestartTerminal,
-                prompt_on_exit: PROMPT_ON_EXIT,
+                // prompt_on_exit: PROMPT_ON_EXIT,
             },
             #[cfg(feature = "hack")]
             hack: CfgHack {
@@ -1195,7 +1255,7 @@ fn sanitize_key(key: Option<String>,
                 default: &str,
                 seen: &mut HashSet<String>) -> Option<String> {
     fn do_sanitize_key(key: &str) -> Option<String> {
-        let (k, _): (u32, ModifierType) = accelerator_parse(&key);
+        let (k, _): (u32, ModifierType) = accelerator_parse(key);
 
         return if k > 0 {
             Some(key.to_string())

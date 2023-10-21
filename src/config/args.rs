@@ -32,4 +32,12 @@ pub struct ZohaArgs {
     /// Sanitize configuration, print any errors and exit.
     #[arg(long, default_value_t = false)]
     pub dry_run: bool,
+
+    /// Print configuration and exit
+    #[arg(short, long, default_value_t = false)]
+    pub print_config: bool,
+
+    /// Print color pallets
+    #[arg(long, default_value_t = false)]
+    pub print_pallets: bool,
 }

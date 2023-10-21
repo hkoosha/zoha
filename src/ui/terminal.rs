@@ -82,7 +82,6 @@ impl ZohaTerminal {
 
             vte.set_allow_hyperlink(cfg.terminal.allow_hyper_link);
             vte.set_word_char_exceptions(&cfg.terminal.word_char_exceptions);
-            vte.set_allow_bold(cfg.terminal.allow_bold);
             vte.set_audible_bell(cfg.terminal.audible_bell);
 
             vte.set_font(Some(&cfg.font.font));
@@ -209,7 +208,7 @@ impl ZohaTerminal {
                 .process
                 .working_dir
                 .as_ref()
-                .map(|it| PathBuf::from(it))
+                .map(PathBuf::from)
         ).map(|it| it.into_os_string().to_string_lossy().into_owned());
 
         let shell: String = self.ctx.borrow().ctx.borrow().cfg.process.command.clone();
@@ -277,7 +276,7 @@ impl ZohaTerminal {
     pub fn enforce_transparency(&self) {
         let enabled: bool = self.ctx.borrow().ctx.borrow().transparency_enabled;
 
-        let mut bg: RGBA = self.ctx.borrow().ctx.borrow().cfg.color.bg.clone();
+        let mut bg: RGBA = self.ctx.borrow().ctx.borrow().cfg.color.bg;
         if !enabled {
             bg.set_alpha(1.0);
         }
