@@ -12,10 +12,11 @@ use gtk::prelude::ApplicationExtManual;
 use log::debug;
 
 use config::cfg::read_cfg_content;
-use zoha::config;
+use zoha::{config, print_config, print_pallets};
 use zoha::config::args::ZohaArgs;
 use zoha::config::cfg::ZohaCfg;
 use zoha::connect_gdk_dbus;
+#[cfg(feature = "hack")]
 use zoha::hack::enable_key_grabber_hack;
 use zoha::list_keycodes;
 use zoha::list_monitors;
@@ -28,8 +29,14 @@ fn main() -> Result<()> {
     pretty_env_logger::init();
 
     let args: ZohaArgs = ZohaArgs::parse();
+
     if args.signal {
         send_toggle_signal_through_dbus()?;
+        return Ok(());
+    }
+
+    if args.print_pallets {
+        print_pallets();
         return Ok(());
     }
 
@@ -82,6 +89,12 @@ fn main() -> Result<()> {
     }?;
 
     let cfg: ZohaCfg = ZohaCfg::from_toml(&cfg_content);
+
+    if args.print_config {
+        print_config(cfg);
+        return Ok(());
+    }
+
     let cfg: Rc<ZohaCfg> = Rc::new(cfg);
 
     let ctx: ZohaCtx = ZohaCtx::new(cfg);
@@ -112,7 +125,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let application: Application = create_application(&ctx).build();
+    let application: Application = create_application().build();
 
     application.connect_activate(move |app| {
         match on_app_activate(&ctx0, app) {

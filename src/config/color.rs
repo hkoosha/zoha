@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use gdk::RGBA;
 use serde::Deserialize;
 
@@ -15,6 +16,21 @@ pub enum Pallet {
     SolarizedLight,
     SolarizedDark,
     Snazzy,
+}
+
+impl Display for Pallet {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Pallet::Tango => write!(f, "Tango"),
+            Pallet::Zenburn => write!(f, "Zenburn"),
+            Pallet::Linux => write!(f, "Linux"),
+            Pallet::XTerm => write!(f, "XTerm"),
+            Pallet::RXVT => write!(f, "RXVT"),
+            Pallet::SolarizedLight => write!(f, "SolarizedLight"),
+            Pallet::SolarizedDark => write!(f, "SolarizedDark"),
+            Pallet::Snazzy => write!(f, "Snazzy"),
+        }
+    }
 }
 
 impl Pallet {
