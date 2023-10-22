@@ -258,9 +258,8 @@ pub fn toggle(ctx: &Arc<RefCell<ZohaCtx>>) {
         window.show_all();
         window.present();
         ctx.showing = true;
+        unsafe { macos_screens(); }
     }
-
-    unsafe { macos_screens(); }
 }
 
 #[cfg(target_os = "linux")]
