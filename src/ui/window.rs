@@ -405,7 +405,12 @@ pub fn goto_next(ctx: &Rc<RefCell<ZohaCtx>>) {
     match ctx.borrow().get_notebook() {
         None => eprintln!("missing notebook on goto next tab"),
         Some(notebook) => {
-            notebook.next_page();
+            if notebook.page() == (notebook.n_pages() - 1) as i32 &&
+                ctx.borrow().cfg.display.tab_scroll_wrap {
+                notebook.set_current_page(Some(0));
+            } else {
+                notebook.next_page();
+            }
         }
     }
 }
@@ -416,7 +421,11 @@ pub fn goto_previous(ctx: &Rc<RefCell<ZohaCtx>>) {
     match ctx.borrow().get_notebook() {
         None => eprintln!("missing notebook on goto next tab"),
         Some(notebook) => {
-            notebook.prev_page();
+            if notebook.page() == 0 && ctx.borrow().cfg.display.tab_scroll_wrap {
+                notebook.set_current_page(Some(notebook.n_pages() - 1));
+            } else {
+                notebook.prev_page();
+            }
         }
     }
 }
