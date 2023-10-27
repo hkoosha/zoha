@@ -154,6 +154,7 @@ bg = "rgba(0,0,0,0.8)"
 | always_on_top            | true    | bool   | Always on top of other windows.                                                                                   |
 | sticky                   | true    | bool   | Always on all desktops.                                                                                           |
 | fullscreen               | true    | bool   | Fullscreen.                                                                                                       |
+| tab_scroll_wrap          | true    | bool   | When scrolling tabs with the configured shortcut, wrap when reaching the end / beginning.                         |
 | tab_mode                 | Auto    | enum   | When to show tabs. "Auto" will show tabs if there are more than one tab; possible values: Auto, Never, Always.    |
 | tab_position             | Top     | enum   | Where to show tabs; possible values: Left, Right, Top, Bottom.                                                    |
 | tab_expand               | false   | bool   | Expand the tab bar to full window's width.                                                                        |

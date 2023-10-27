@@ -178,7 +178,7 @@ pub enum LastTabExitBehavior {
 impl Display for LastTabExitBehavior {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            LastTabExitBehavior::RestartTerminal => write!(f, "RestartTermianl"),
+            LastTabExitBehavior::RestartTerminal => write!(f, "RestartTerminal"),
             LastTabExitBehavior::RestartTerminalAndHide => write!(f, "RestartTerminalAndHide"),
             LastTabExitBehavior::Exit => write!(f, "Exit"),
         }
@@ -239,6 +239,7 @@ struct RawCfgDisplay {
     always_on_top: Option<bool>,
     sticky: Option<bool>,
     fullscreen: Option<bool>,
+    tab_scroll_wrap: Option<bool>,
     tab_mode: Option<TabMode>,
     tab_position: Option<TabPosition>,
     tab_expand: Option<bool>,
@@ -500,6 +501,7 @@ pub struct CfgDisplay {
     pub always_on_top: bool,
     pub sticky: bool,
     pub fullscreen: bool,
+    pub tab_scroll_wrap: bool,
     pub tab_mode: TabMode,
     pub tab_position: TabPosition,
     pub tab_expand: bool,
@@ -711,6 +713,7 @@ mod defaults {
     pub(super) const TAB_EXPAND: bool = false;
     pub(super) const TAB_NUM_CHARS: i8 = 25;
     // pub(super) const PROMPT_ON_EXIT: bool = false;
+    pub(super) const TAB_SCROLL_WRAP: bool = true;
 
     pub(super) const TOGGLE_KEYCODE: &str = "F1";
 
@@ -823,6 +826,7 @@ impl ZohaCfg {
                         sticky: raw.display.sticky.unwrap_or(STICKY),
                         fullscreen: raw.display.fullscreen.unwrap_or(FULLSCREEN),
                         title: raw.display.title.unwrap_or_else(|| TITLE.to_string()),
+                        tab_scroll_wrap: raw.display.tab_scroll_wrap.unwrap_or(TAB_SCROLL_WRAP),
                         tab_mode: raw.display.tab_mode.unwrap_or(TabMode::Auto),
                         tab_position: raw.display.tab_position.unwrap_or(TabPosition::Top),
                         tab_expand: raw.display.tab_expand.unwrap_or(TAB_EXPAND),
@@ -1098,6 +1102,7 @@ impl Default for ZohaCfg {
                 sticky: STICKY,
                 fullscreen: FULLSCREEN,
                 title: TITLE.to_string(),
+                tab_scroll_wrap: TAB_SCROLL_WRAP,
                 tab_mode: TabMode::Auto,
                 tab_position: TabPosition::Top,
                 tab_expand: TAB_EXPAND,
