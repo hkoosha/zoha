@@ -1,14 +1,15 @@
 #![allow(clippy::needless_return)]
+#[cfg(all(feature = "hack", not(target_os = "linux")))]
+compile_error!("feature 'hack' can oly be enabled on linux");
 
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::fmt::Formatter;
-use std::rc::Rc;
+use std::sync::Arc;
+use cacao::foundation::id;
+use cacao::objc::{class, msg_send, sel, sel_impl};
 
-use dbus::blocking::Connection;
-use dbus::channel::Sender;
-use dbus::Message;
 use eyre::ContextCompat;
 use eyre::eyre;
 use gdk::Display;
@@ -16,14 +17,23 @@ use gdk::prelude::MonitorExt;
 use gtk::AccelGroup;
 use gtk::Application;
 use gtk::ApplicationWindow;
+#[cfg(target_os = "linux")]
 use gtk::gio::DBusSignalFlags;
 use gtk::Notebook;
+#[cfg(target_os = "linux")]
 use gtk::prelude::ApplicationExt;
 use gtk::prelude::ContainerExt;
 use gtk::prelude::GtkWindowExt;
 use gtk::prelude::NotebookExt;
 use gtk::prelude::WidgetExt;
 use log::{debug, trace};
+
+#[cfg(target_os = "linux")]
+use dbus::blocking::Connection;
+#[cfg(target_os = "linux")]
+use dbus::channel::Sender;
+#[cfg(target_os = "linux")]
+use dbus::Message;
 
 use crate::config::cfg::ZohaCfg;
 use crate::config::color::Pallet;
@@ -42,21 +52,24 @@ pub mod ui;
 pub mod hack;
 
 
+#[cfg(target_os = "linux")]
 pub const DBUS_INTERFACE: &str = "io.koosha.zoha";
+#[cfg(target_os = "linux")]
 pub const DBUS_MEMBER: &str = "zoha";
+#[cfg(target_os = "linux")]
 pub const DBUS_PATH: &str = "/io/koosha/zoha";
 
 struct TabCounter(usize);
 
 pub struct ZohaCtx {
-    pub cfg: Rc<ZohaCfg>,
+    pub cfg: Arc<ZohaCfg>,
     pub font_scale: f64,
     pub fullscreen: bool,
     pub accel_group: AccelGroup,
     pub showing: bool,
-    pub terminals: Rc<RefCell<HashMap<u32, ZohaTerminal>>>,
+    pub terminals: Arc<RefCell<HashMap<u32, ZohaTerminal>>>,
     pub transparency_enabled: bool,
-    tab_counter: Rc<RefCell<TabCounter>>,
+    tab_counter: Arc<RefCell<TabCounter>>,
     window: Option<ApplicationWindow>,
     notebook: Option<Notebook>,
 }
@@ -79,7 +92,7 @@ impl Debug for ZohaCtx {
 }
 
 impl ZohaCtx {
-    pub fn new(cfg: Rc<ZohaCfg>) -> Self {
+    pub fn new(cfg: Arc<ZohaCfg>) -> Self {
         let fullscreen = cfg.display.fullscreen;
         return Self {
             cfg,
@@ -87,11 +100,11 @@ impl ZohaCtx {
             fullscreen,
             accel_group: AccelGroup::new(),
             showing: true,
-            terminals: Rc::new(RefCell::new(HashMap::new())),
+            terminals: Arc::new(RefCell::new(HashMap::new())),
             transparency_enabled: true,
             window: None,
             notebook: None,
-            tab_counter: Rc::new(RefCell::new(TabCounter(1))),
+            tab_counter: Arc::new(RefCell::new(TabCounter(1))),
         };
     }
 
@@ -155,11 +168,11 @@ impl ZohaCtx {
 }
 
 
-pub fn on_app_activate(ctx: &Rc<RefCell<ZohaCtx>>,
+pub fn on_app_activate(ctx: &Arc<RefCell<ZohaCtx>>,
                        app: &Application) -> eyre::Result<()> {
     let window: ApplicationWindow = create_window(&ctx.borrow().cfg, app).build();
 
-    // let ctx_on_focus = Rc::clone(ctx);
+    // let ctx_on_focus = Arc::clone(ctx);
     // window.connect_activate_focus(move |_| {
     //     match ctx_on_focus.borrow().get_notebook() {
     //         None => eprintln!("missing notebook on window activate"),
@@ -194,7 +207,7 @@ pub fn on_app_activate(ctx: &Rc<RefCell<ZohaCtx>>,
 
     add_tab(ctx, !ctx.borrow().cfg.display.start_hidden);
 
-    let reorder_ctx = Rc::clone(ctx);
+    let reorder_ctx = Arc::clone(ctx);
     ctx.borrow().get_notebook().unwrap().connect_page_reordered(move |_, child, index| {
         on_page_reorder(&reorder_ctx, child, index);
     });
@@ -211,10 +224,11 @@ pub fn on_app_activate(ctx: &Rc<RefCell<ZohaCtx>>,
     return Ok(());
 }
 
-pub fn connect_gdk_dbus(ctx: &Rc<RefCell<ZohaCtx>>,
+#[cfg(target_os = "linux")]
+pub fn connect_gdk_dbus(ctx: &Arc<RefCell<ZohaCtx>>,
                         app: &Application) {
     let app: Application = app.clone();
-    let ctx = Rc::clone(ctx);
+    let ctx = Arc::clone(ctx);
     app.dbus_connection()
         .expect("could not get a dbus connection")
         .signal_subscribe(
@@ -230,7 +244,7 @@ pub fn connect_gdk_dbus(ctx: &Rc<RefCell<ZohaCtx>>,
         );
 }
 
-pub fn toggle(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn toggle(ctx: &Arc<RefCell<ZohaCtx>>) {
     let mut ctx = ctx.borrow_mut();
 
     let window: &ApplicationWindow = ctx
@@ -244,9 +258,11 @@ pub fn toggle(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.show_all();
         window.present();
         ctx.showing = true;
+        unsafe { macos_screens(); }
     }
 }
 
+#[cfg(target_os = "linux")]
 pub fn send_toggle_signal_through_dbus() -> eyre::Result<()> {
     debug!("sending dbus signal");
     let conn: Connection = Connection::new_session()?;
@@ -257,8 +273,10 @@ pub fn send_toggle_signal_through_dbus() -> eyre::Result<()> {
         }
         Err(_) => Err(eyre!("failed to send dbus signal")),
     };
+    return Ok(());
 }
 
+#[cfg(target_os = "linux")]
 pub(crate) fn new_signal() -> Message {
     let signal = Message::new_signal(
         DBUS_PATH,
@@ -287,7 +305,7 @@ pub fn list_monitors() -> eyre::Result<Vec<String>> {
     return Ok(monitors);
 }
 
-#[cfg(feature = "hack")]
+#[cfg(all(feature = "hack"))]
 pub fn list_keycodes() -> Vec<&'static str> {
     return vec![
         "Key0",
@@ -589,3 +607,25 @@ pub fn print_pallets() {
         println!("[14] = {}", pallet.colors()[14]);
     }
 }
+
+pub unsafe fn macos_screens() {
+    // NSWindowCollectionBehaviorCanJoinAllSpaces and friends
+    let mask = 1 | (1 << 6) | (1 << 8);
+
+    let shared: id = msg_send![class!(NSApplication), sharedApplication];
+    println!("shared {:?}", shared);
+
+    let windows: id = msg_send![shared, windows];
+    println!("windows {:?}", windows);
+
+    let window: id = msg_send![windows, firstObject];
+    println!("first {:?}", window);
+
+    if !window.is_null() {
+        let _: () = msg_send![window, setCollectionBehavior:mask];
+    }
+    else {
+        eprintln!("no window")
+    }
+}
+

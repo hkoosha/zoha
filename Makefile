@@ -1,9 +1,7 @@
 .DEFAULT_GOAL = r
 
-# RUST_FLAGS := 'RUSTFLAGS=-Awarnings'
-RUST_FLAGS := ''
-
-export
+# RUSTFLAGS := -Awarnings
+# export
 
 .PHONY: c
 c:

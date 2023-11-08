@@ -4,7 +4,7 @@ use std::fmt::Formatter;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
-use std::rc::Rc;
+use std::sync::Arc;
 use std::string::ToString;
 
 use gdk::gio;
@@ -30,7 +30,7 @@ use crate::ui::window::remove_page_by_hbox;
 use crate::ZohaCtx;
 
 struct ZohaTerminalCtx {
-    ctx: Rc<RefCell<ZohaCtx>>,
+    ctx: Arc<RefCell<ZohaCtx>>,
     pid: Option<Pid>,
     // dropped_to_default_shell: bool,
     // working_dir: Option<String>,
@@ -45,7 +45,7 @@ pub struct ZohaTerminal {
     pub vte: Terminal,
     pub scrollbar: Scrollbar,
     pub tab_counter: usize,
-    ctx: Rc<RefCell<ZohaTerminalCtx>>,
+    ctx: Arc<RefCell<ZohaTerminalCtx>>,
 }
 
 impl Debug for ZohaTerminal {
@@ -62,7 +62,7 @@ impl Debug for ZohaTerminal {
 }
 
 impl ZohaTerminal {
-    pub fn new(ctx: Rc<RefCell<ZohaCtx>>) -> Self {
+    pub fn new(ctx: Arc<RefCell<ZohaCtx>>) -> Self {
         let vte: Terminal = {
             let cfg = &ctx.borrow().cfg;
 
@@ -130,7 +130,7 @@ impl ZohaTerminal {
         //     .as_ref()
         //     .map(|it| it.to_string());
 
-        let term_ctx = Rc::new(RefCell::new(ZohaTerminalCtx {
+        let term_ctx = Arc::new(RefCell::new(ZohaTerminalCtx {
             ctx,
             pid: None,
             // dropped_to_default_shell: false,
@@ -149,8 +149,8 @@ impl ZohaTerminal {
     }
 
     pub fn connect_signals(&self) {
-        let ctx = Rc::clone(&self.ctx);
-        let ctx0 = Rc::clone(&ctx);
+        let ctx = Arc::clone(&self.ctx);
+        let ctx0 = Arc::clone(&ctx);
 
         let handler: SignalHandlerId = self.vte.connect_child_exited(move |vte, _| {
             let mut cxb = ctx.borrow_mut();

@@ -715,6 +715,7 @@ mod defaults {
     // pub(super) const PROMPT_ON_EXIT: bool = false;
     pub(super) const TAB_SCROLL_WRAP: bool = true;
 
+    #[cfg(feature = "hack")]
     pub(super) const TOGGLE_KEYCODE: &str = "F1";
 
     pub(super) const ACTION_TAB_ADD: &str = "<Ctrl><Shift>t";
@@ -740,6 +741,7 @@ mod defaults {
     pub(super) const ACTION_FONT_SIZE_DEC: &str = "<Ctrl><Alt>minus";
     pub(super) const ACTION_FONT_SIZE_RESET: &str = "<Ctrl><Alt>0";
 
+    #[cfg(feature = "hack")]
     pub(super) fn default_key_codes() -> Vec<String> {
         return TOGGLE_KEYCODE.split('+').map(|it| it.to_string()).collect();
     }

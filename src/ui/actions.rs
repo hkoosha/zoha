@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use gdk::gio::Action;
 use glib::clone;
@@ -214,7 +214,7 @@ pub fn set_app_actions(ctx: &ZohaCtx,
     }
 }
 
-pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
+pub fn set_win_actions(ctx: &Arc<RefCell<ZohaCtx>>) {
     let cxb = ctx.borrow();
 
     let window: &ApplicationWindow = cxb.get_window().unwrap();
@@ -236,7 +236,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_add.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_ADD, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             add_tab(&ctx, true);
         });
@@ -249,7 +249,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_close.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_CLOSE, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             close_tab(&ctx);
         });
@@ -262,7 +262,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_move_backward.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_MOVE_BACKWARD, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             move_backward(&ctx);
         });
@@ -275,7 +275,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_move_forward.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_MOVE_FORWARD, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             move_forward(&ctx);
         });
@@ -288,7 +288,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_goto_next.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_GOTO_NEXT, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             goto_next(&ctx);
         });
@@ -301,7 +301,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_goto_previous.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_GOTO_PREVIOUS, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             goto_previous(&ctx);
         });
@@ -314,7 +314,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_goto_last.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_GOTO_LAST, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             goto_last(&ctx);
         });
@@ -327,7 +327,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_goto_01.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_GOTO_01, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             goto_n(&ctx, 1);
         });
@@ -340,7 +340,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_goto_02.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_GOTO_02, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             goto_n(&ctx, 2);
         });
@@ -353,7 +353,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_goto_03.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_GOTO_03, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             goto_n(&ctx, 3);
         });
@@ -366,7 +366,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_goto_04.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_GOTO_04, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             goto_n(&ctx, 4);
         });
@@ -379,7 +379,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_goto_05.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_GOTO_05, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             goto_n(&ctx, 5);
         });
@@ -392,7 +392,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_goto_06.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_GOTO_06, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             goto_n(&ctx, 6);
         });
@@ -405,7 +405,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_goto_07.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_GOTO_07, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             goto_n(&ctx, 7);
         });
@@ -418,7 +418,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.tab_goto_08.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__TAB_GOTO_08, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             goto_n(&ctx, 8);
         });
@@ -433,7 +433,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.copy.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__COPY, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             copy(&ctx);
         });
@@ -446,7 +446,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.paste.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__PASTE, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             paste(&ctx);
         });
@@ -462,7 +462,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
     if let Some(key) = cxb.cfg.keys.transparency_toggle.as_ref() {
         let sa =
             SimpleAction::new(ACTION__ZOHA__TRANSPARENCY_TOGGLE, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             toggle_transparency(&ctx);
         });
@@ -477,7 +477,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.font_size_inc.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__FONT_INC, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             font_inc(&ctx);
         });
@@ -490,7 +490,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.font_size_dec.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__FONT_DEC, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             font_dec(&ctx);
         });
@@ -503,7 +503,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.font_size_reset.as_ref() {
         let sa = SimpleAction::new(ACTION__ZOHA__FONT_RESET, None);
-        let ctx = Rc::clone(ctx);
+        let ctx = Arc::clone(ctx);
         sa.connect_activate(move |_, _| {
             font_reset(&ctx);
         });
