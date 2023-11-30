@@ -7,7 +7,7 @@ A drop down terminal inspired by Tilda
 Usage: zoha [OPTIONS]
 
 Options:
-  -c, --cfg-file <CFG_FILE>    Override location of config file
+  -c, --cfg-file CFG_FILE      Override location of config file
   -k, --keypress-grabber       Disable listening on dbus for keypress
       --list-key-grabber-keys  List keys accepted by keypress grabber
   -s, --signal                 Signal Zoha to toggle visibility and exit
@@ -84,9 +84,9 @@ The configuration format is TOML and looks like this:
 # nothing here yet.
 
 [keys]
-quit = "<Shift><Ctrl><Alt>q"
-tab_add = "<Shift><Ctrl>t"
-tab_close = "<Shift><Ctrl>w"
+quit = "Shift-Ctrl-Alt-q"
+tab_add = "Shift-Ctrl-t"
+tab_close = "Shift-Ctrl-w"
 
 [display]
 # start_hidden = true
@@ -165,28 +165,28 @@ bg = "rgba(0,0,0,0.8)"
 
 | Config              | Default               | Type   | Notes                                                                                  |
 |---------------------|-----------------------|--------|----------------------------------------------------------------------------------------|
-| copy                | <Ctr><Shift>C         | string | Copy shortcut; valid GTK accelerator specification.                                    |
-| paste               | <Ctr><Shift>V         | string | Paste shortcut; valid GTK accelerator specification.                                   |
-| quit                | <Ctr><Shift><Alt>q    | string | App exit shortcut; valid GTK accelerator specification.                                |
+| copy                | Ctrl-Shift-C         | string | Copy shortcut; valid GTK accelerator specification.                                    |
+| paste               | Ctrl-Shift-V         | string | Paste shortcut; valid GTK accelerator specification.                                   |
+| quit                | Ctrl-Shift-Alt-q    | string | App exit shortcut; valid GTK accelerator specification.                                |
 | transparency_toggle | F12                   | string | Temporarily toggle transparency; valid GTK accelerator specification.                  |
-| tab_add             | <Ctr><Shift>T         | string | Add a new tab next to current tab; valid GTK accelerator specification.                |
-| tab_close           | <Ctr><Shift>W         | string | Close current tab; valid GTK accelerator specification.                                |
-| tab_move_backward   | <Ctr><Shift>Page_Up   | string | Move the active tab forward among all tabs; valid GTK accelerator specification.       |
-| tab_move_forward    | <Ctr><Shift>Page_Down | string | Move the active tab backward among all tabs; valid GTK accelerator specification.      |
-| tab_goto_next       | <Ctr>Page_Down        | string | Goto next tab; valid GTK accelerator specification.                                    |
-| tab_move_previous   | <Ctr>Page_Down        | string | Goto previous tab; valid GTK accelerator specification.                                |
-| tab_goto_last       | <Ctr><Alt>9           | string | Goto last tab; valid GTK accelerator specification.                                    |
-| tab_goto_01         | <Ctr><Alt>1           | string | Goto tab number 1; valid GTK accelerator specification.                                |
-| tab_goto_02         | <Ctr><Alt>2           | string | Goto tab number 2; valid GTK accelerator specification.                                |
-| tab_goto_03         | <Ctr><Alt>3           | string | Goto tab number 3; valid GTK accelerator specification.                                |
-| tab_goto_04         | <Ctr><Alt>4           | string | Goto tab number 4; valid GTK accelerator specification.                                |
-| tab_goto_05         | <Ctr><Alt>5           | string | Goto tab number 5; valid GTK accelerator specification.                                |
-| tab_goto_06         | <Ctr><Alt>6           | string | Goto tab number 6; valid GTK accelerator specification.                                |
-| tab_goto_07         | <Ctr><Alt>7           | string | Goto tab number 7; valid GTK accelerator specification.                                |
-| tab_goto_08         | <Ctr><Alt>8           | string | Goto tab number 8; valid GTK accelerator specification.                                |
-| font_size_inc       | <Ctr><Alt>Equal       | string | Temporarily increase font size on all tabs; valid GTK accelerator specification.       |
-| font_size_dec       | <Ctr><Alt>Equal       | string | Temporarily decrease font size on all tabs; valid GTK accelerator specification.       |
-| font_size_reset     | <Ctr><Alt>Equal       | string | Reset font size on all tabs to the initial value; valid GTK accelerator specification. |
+| tab_add             | Ctrl-Shift-T         | string | Add a new tab next to current tab; valid GTK accelerator specification.                |
+| tab_close           | Ctrl-Shift-W         | string | Close current tab; valid GTK accelerator specification.                                |
+| tab_move_backward   | Ctrl-Shift-Page_Up   | string | Move the active tab forward among all tabs; valid GTK accelerator specification.       |
+| tab_move_forward    | Ctrl-Shift-Page_Down | string | Move the active tab backward among all tabs; valid GTK accelerator specification.      |
+| tab_goto_next       | Ctrl-Page_Down        | string | Goto next tab; valid GTK accelerator specification.                                    |
+| tab_move_previous   | Ctrl-Page_Down        | string | Goto previous tab; valid GTK accelerator specification.                                |
+| tab_goto_last       | Ctrl-Alt-9           | string | Goto last tab; valid GTK accelerator specification.                                    |
+| tab_goto_01         | Ctrl-Alt-1           | string | Goto tab number 1; valid GTK accelerator specification.                                |
+| tab_goto_02         | Ctrl-Alt-2           | string | Goto tab number 2; valid GTK accelerator specification.                                |
+| tab_goto_03         | Ctrl-Alt-3           | string | Goto tab number 3; valid GTK accelerator specification.                                |
+| tab_goto_04         | Ctrl-Alt-4           | string | Goto tab number 4; valid GTK accelerator specification.                                |
+| tab_goto_05         | Ctrl-Alt-5           | string | Goto tab number 5; valid GTK accelerator specification.                                |
+| tab_goto_06         | Ctrl-Alt-6           | string | Goto tab number 6; valid GTK accelerator specification.                                |
+| tab_goto_07         | Ctrl-Alt-7           | string | Goto tab number 7; valid GTK accelerator specification.                                |
+| tab_goto_08         | Ctrl-Alt-8           | string | Goto tab number 8; valid GTK accelerator specification.                                |
+| font_size_inc       | Ctrl-Alt-Equal       | string | Temporarily increase font size on all tabs; valid GTK accelerator specification.       |
+| font_size_dec       | Ctrl-Alt-Equal       | string | Temporarily decrease font size on all tabs; valid GTK accelerator specification.       |
+| font_size_reset     | Ctrl-Alt-Equal       | string | Reset font size on all tabs to the initial value; valid GTK accelerator specification. |
 
 ### [terminal]
 
