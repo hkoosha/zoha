@@ -18,7 +18,7 @@ use zoha::config::cfg::ZohaCfg;
 use zoha::connect_gdk_dbus;
 #[cfg(feature = "hack")]
 use zoha::hack::enable_key_grabber_hack;
-use zoha::list_keycodes;
+use zoha::hack::list_keycodes;
 use zoha::list_monitors;
 use zoha::on_app_activate;
 use zoha::send_toggle_signal_through_dbus;
