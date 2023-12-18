@@ -1,7 +1,7 @@
 .DEFAULT_GOAL = r
 
-# RUST_FLAGS := 'RUSTFLAGS=-Awarnings'
-RUST_FLAGS := ''
+RUST_FLAGS := '-Awarnings'
+# RUST_FLAGS := ''
 
 export
 

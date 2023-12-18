@@ -2,22 +2,17 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use gdk::EventMask;
 use glib::Cast;
-use gtk::Application;
-use gtk::ApplicationWindow;
-use gtk::builders::ApplicationBuilder;
-use gtk::builders::ApplicationWindowBuilder;
-use gtk::Label;
-use gtk::Notebook;
-use gtk::prelude::ContainerExt;
-use gtk::prelude::ContainerExtManual;
-use gtk::prelude::GtkWindowExt;
-use gtk::prelude::NotebookExt;
-use gtk::prelude::NotebookExtManual;
-use gtk::prelude::WidgetExt;
-use gtk::Widget;
-use log::debug;
+use gtk4::{Application, CssProvider};
+use gtk4::ApplicationWindow;
+use gtk4::builders::ApplicationBuilder;
+use gtk4::builders::ApplicationWindowBuilder;
+use gtk4::Label;
+use gtk4::Notebook;
+use gtk4::prelude::GtkWindowExt;
+use gtk4::prelude::WidgetExt;
+use gtk4::Widget;
+use log::{debug, info};
 use log::trace;
 
 use crate::config::cfg::LastTabExitBehavior;
@@ -43,7 +38,7 @@ pub fn create_window(cfg: &ZohaCfg,
     let h: u32 = cfg.display.get_height();
     let w: u32 = cfg.display.get_width();
 
-    trace!("create window, h={}, w={}", h, w);
+    info!("create window, h={}, w={}", h, w);
 
     let window = ApplicationWindow::builder()
         .application(app)
@@ -55,6 +50,15 @@ pub fn create_window(cfg: &ZohaCfg,
     return window;
 }
 
+pub fn css() -> CssProvider {
+    let provider = CssProvider::new();
+    provider.load_from_data("\
+    .Mama { background-color: rgba(0,0,0,0.4); }
+    ");
+
+    return provider;
+}
+
 pub fn init_window(ctx: &mut ZohaCtx,
                    window: ApplicationWindow) -> eyre::Result<()> {
     trace!("init window");
@@ -62,12 +66,47 @@ pub fn init_window(ctx: &mut ZohaCtx,
 
     if ctx.cfg.display.skip_task_bar {
         debug!("skipping taskbar");
-        window.set_skip_taskbar_hint(ctx.cfg.display.skip_task_bar);
+        // match window.surface().downcast::<X11Surface>() {
+        //     Ok(mut surface) => {
+        //         // unsafe {
+        //         // gdk_x11_surface_set_skip_taskbar_hint(
+        //         //     surface.as_ptr(),
+        //         //     ctx.cfg.display.skip_task_bar.into_glib(),
+        //         // );
+        //         // }
+        //     }
+        //     Err(_) => {
+        //         match window.surface().downcast::<WaylandSurface>() {
+        //             Ok(_wayland) => {
+        //                 eprintln!("skip taskbar not implemented for wayland");
+        //             }
+        //             Err(_) => {
+        //                 eprintln!("could not convert surface to either X11 or Wayland")
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     if ctx.cfg.display.always_on_top {
         debug!("always on top");
-        window.set_keep_above(ctx.cfg.display.always_on_top);
+        // match window.surface().downcast::<X11Surface>() {
+        //     Ok(mut surface) => {
+        //         // unsafe {
+        //         //     surface.xid();
+        //         // }
+        //     }
+        //     Err(_) => {
+        //         match window.surface().downcast::<WaylandSurface>() {
+        //             Ok(_wayland) => {
+        //                 eprintln!("stay on top not implemented for wayland");
+        //             }
+        //             Err(_) => {
+        //                 eprintln!("could not convert surface to either X11 or Wayland")
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     window.set_decorated(false);
@@ -75,10 +114,9 @@ pub fn init_window(ctx: &mut ZohaCtx,
 
     if ctx.cfg.display.sticky {
         debug!("window sticky");
-        window.stick();
+        eprintln!("sticky not implemented");
     } else {
         debug!("window not sticky");
-        window.unstick();
     }
 
     if ctx.fullscreen {
@@ -89,34 +127,23 @@ pub fn init_window(ctx: &mut ZohaCtx,
         window.unfullscreen();
     }
 
-    window.set_app_paintable(true);
-
     // For CSS.
     window.set_widget_name("Main");
 
     // Set RGBA color map if possible so VTE can use real alpha channels for transparency.
-    if let Some(screen) = GtkWindowExt::screen(&window) {
-        if screen.is_composited() {
-            if let Some(visual) = screen.rgba_visual().or_else(|| screen.system_visual()) {
-                window.set_visual(Some(&visual));
-            } else {
-                debug!("no visual set on window due to missing visual");
-            }
-        } else {
-            debug!("no visual set on window due to screen not composited");
-        }
-    } else {
-        eprintln!("missing gtk screen for set visual on window init");
-    }
-
-    // TODO: needed? note: this is for auto-hide ticker not implemented yet.
-    // FROM TILDA: gdk_x11_get_server_time call will hang if GDK_PROPERTY_CHANGE_MASK is not set.
-    if let Some(screen) = GtkWindowExt::screen(&window) {
-        if let Some(root_window) = screen.root_window() {
-            let events: EventMask = root_window.events();
-            root_window.set_events(events & EventMask::PROPERTY_CHANGE_MASK);
-        }
-    }
+    // if let Some(screen) = GtkWindowExt::screen(&window) {
+    //     if screen.is_composited() {
+    //         if let Some(visual) = screen.rgba_visual().or_else(|| screen.system_visual()) {
+    //             window.set_visual(Some(&visual));
+    //         } else {
+    //             debug!("no visual set on window due to missing visual");
+    //         }
+    //     } else {
+    //         debug!("no visual set on window due to screen not composited");
+    //     }
+    // } else {
+    //     eprintln!("missing gtk screen for set visual on window init");
+    // }
 
     return Ok(());
 }
@@ -145,7 +172,7 @@ pub fn create_notebook(ctx: &mut ZohaCtx) {
 pub fn on_page_reorder(ctx: &Rc<RefCell<ZohaCtx>>,
                        child: &Widget,
                        new_position: u32) {
-    let child = match child.downcast_ref::<gtk::Box>() {
+    let child = match child.downcast_ref::<gtk4::Box>() {
         None => {
             eprintln!("could not get child hbox on pages reorder");
             return;
@@ -219,7 +246,7 @@ pub fn on_page_removed(ctx: &Rc<RefCell<ZohaCtx>>,
 }
 
 pub fn remove_page_by_hbox(ctx: &Rc<RefCell<ZohaCtx>>,
-                           hbox: &gtk::Box) {
+                           hbox: &gtk4::Box) {
     let page: Option<u32> = match ctx.borrow().get_notebook() {
         None => {
             eprintln!("missing notebook on term exit");
@@ -236,7 +263,7 @@ pub fn remove_page_by_hbox(ctx: &Rc<RefCell<ZohaCtx>>,
                 .unwrap_or_else(|| "?".to_string()),
             );
 
-            notebook.remove(hbox);
+            notebook.remove_page(page);
             adjust_tab_bar(ctx);
 
             page
@@ -252,6 +279,8 @@ pub fn remove_page_by_hbox(ctx: &Rc<RefCell<ZohaCtx>>,
 
         on_page_removed(ctx, page);
     }
+
+    set_focus(&ctx);
 }
 
 pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>,
@@ -304,15 +333,16 @@ pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>,
             term.connect_signals();
 
             let new_page_index: u32 = notebook.append_page(
-                &term.hbox,
+                &term.vte,
                 Some(&Label::new(Some("Zoha"))),
             );
             notebook.set_current_page(Some(new_page_index));
             notebook.set_tab_reorderable(&term.hbox, true);
 
             if ctx.borrow().cfg.display.tab_expand {
-                notebook.child_set_property(&term.hbox, "tab-expand", &true);
-                notebook.child_set_property(&term.hbox, "tab-fill", &true);
+                // notebook.child_set_property(&term.hbox, "tab-expand", &true);
+                // notebook.child_set_property(&term.hbox, "tab-fill", &true);
+                eprintln!("tab expand not implemented");
             }
 
             if grab_focus {
@@ -338,6 +368,8 @@ pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>,
             move_tab(ctx, false);
         }
     }
+
+    set_focus(&ctx);
 }
 
 pub fn close_tab(ctx: &Rc<RefCell<ZohaCtx>>) {
@@ -346,6 +378,8 @@ pub fn close_tab(ctx: &Rc<RefCell<ZohaCtx>>) {
     if let Some(mut term) = get_term(ctx, "close_tab") {
         term.kill();
     }
+
+    set_focus(&ctx);
 }
 
 pub fn move_backward(ctx: &Rc<RefCell<ZohaCtx>>) {
@@ -397,6 +431,8 @@ pub fn move_tab(ctx: &Rc<RefCell<ZohaCtx>>,
     };
 
     ctx.borrow().get_notebook().unwrap().reorder_child(&page, Some(new_index));
+
+    set_focus(&ctx);
 }
 
 pub fn goto_next(ctx: &Rc<RefCell<ZohaCtx>>) {
@@ -405,7 +441,7 @@ pub fn goto_next(ctx: &Rc<RefCell<ZohaCtx>>) {
     match ctx.borrow().get_notebook() {
         None => eprintln!("missing notebook on goto next tab"),
         Some(notebook) => {
-            if notebook.page() == (notebook.n_pages() - 1) as i32 &&
+            if notebook.current_page() == Some(notebook.n_pages() - 1) &&
                 ctx.borrow().cfg.display.tab_scroll_wrap {
                 notebook.set_current_page(Some(0));
             } else {
@@ -413,6 +449,8 @@ pub fn goto_next(ctx: &Rc<RefCell<ZohaCtx>>) {
             }
         }
     }
+
+    set_focus(&ctx);
 }
 
 pub fn goto_previous(ctx: &Rc<RefCell<ZohaCtx>>) {
@@ -421,13 +459,15 @@ pub fn goto_previous(ctx: &Rc<RefCell<ZohaCtx>>) {
     match ctx.borrow().get_notebook() {
         None => eprintln!("missing notebook on goto next tab"),
         Some(notebook) => {
-            if notebook.page() == 0 && ctx.borrow().cfg.display.tab_scroll_wrap {
+            if notebook.current_page() == Some(0) && ctx.borrow().cfg.display.tab_scroll_wrap {
                 notebook.set_current_page(Some(notebook.n_pages() - 1));
             } else {
                 notebook.prev_page();
             }
         }
     }
+
+    set_focus(&ctx);
 }
 
 pub fn goto_last(ctx: &Rc<RefCell<ZohaCtx>>) {
@@ -440,6 +480,8 @@ pub fn goto_last(ctx: &Rc<RefCell<ZohaCtx>>) {
             notebook.set_current_page(Some(pages - 1));
         }
     }
+
+    set_focus(&ctx);
 }
 
 pub fn goto_n(ctx: &Rc<RefCell<ZohaCtx>>,
@@ -454,6 +496,8 @@ pub fn goto_n(ctx: &Rc<RefCell<ZohaCtx>>,
             }
         }
     }
+
+    set_focus(&ctx);
 }
 
 pub fn adjust_tab_bar(ctx: &Rc<RefCell<ZohaCtx>>) {
@@ -670,4 +714,35 @@ fn set_label(ctx: &Rc<RefCell<ZohaCtx>>,
             }
         }
     }
+}
+
+pub fn set_focus(ctx: &Rc<RefCell<ZohaCtx>>) {
+    match ctx.borrow().get_notebook() {
+        None => eprintln!("missing notebook on window activate"),
+        Some(notebook) => {
+            match notebook.current_page() {
+                None => {
+                    eprintln!("no active page on notebook on window focus");
+                }
+                Some(page) => {
+                    match ctx.try_borrow() {
+                        Ok(ctx) => {
+                            match ctx.terminals.try_borrow() {
+                                Ok(ctx) => {
+                                    match ctx.get(&page) {
+                                        None => {}
+                                        Some(term) => {
+                                            term.vte.grab_focus();
+                                        }
+                                    }
+                                }
+                                Err(_) => {}
+                            }
+                        }
+                        Err(_) => {}
+                    }
+                }
+            }
+        }
+    };
 }

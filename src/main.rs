@@ -6,9 +6,9 @@ use std::rc::Rc;
 
 use clap::Parser;
 use eyre::Result;
-use gtk::Application;
-use gtk::prelude::ApplicationExt;
-use gtk::prelude::ApplicationExtManual;
+use gtk4::Application;
+use gtk4::prelude::ApplicationExt;
+use gtk4::prelude::ApplicationExtManual;
 use log::debug;
 
 use config::cfg::read_cfg_content;
@@ -67,7 +67,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    gtk::init()?;
+    gtk4::init()?;
 
     if args.list_monitors {
         for m in list_monitors()? {

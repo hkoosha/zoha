@@ -9,8 +9,10 @@ license = "GPL-3.0"
 readme = "README.md"
 
 [features]
-default = ["hack"]
+default = ["hack", "x11", "wayland"]
 "hack" = []
+"wayland" = []
+"x11" = []
 
 [dependencies]
 eyre = "0.6"
@@ -22,15 +24,25 @@ toml = "0.8"
 dirs = "5.0.1"
 clap = { version = "4.4.6", features = ["derive"] }
 
-gtk = "0.18"
-gdk = "0.18"
-glib = "0.18"
-pango = { version = "0.18", features = ["v1_50"] }
+gtk4 = "0.7.3"
+gdk4 = "0.7.3"
+gdk4-x11 = "0.7.2"
+gdk4-wayland = "0.7.2"
+glib = "0.18.4"
+pango = { version = "0.18.3", features = ["v1_52"] }
+
+#gtk = "0.18"
+#gdk = "0.18"
+#glib = "0.18"
+#pango = { version = "0.18", features = ["v1_50"] }
+
+vte4 = { path = "../vte4-rs/vte4", features = ["v0_72"] }
+#vte4 = "0.6.0"
 
 # zoha-vte = { path = "../zoha-vte-rs/zoha-vte", features = ["v0_70"] }
 # zoha-vte-sys = { path = "../zoha-vte-rs/zoha-vte-sys", features = ["v0_70"] }
-zoha-vte = { version = "0.5.0", features = ["v0_50"] }
-zoha-vte-sys = { version = "0.5.0", features = ["v0_50"] }
+#zoha-vte = { version = "0.5.0", features = ["v0_50"] }
+#zoha-vte-sys = { version = "0.5.0", features = ["v0_50"] }
 device_query = "1.1.3"
 dbus = "0.9.7"
 dbus-crossroads = "0.5.2"

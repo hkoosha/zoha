@@ -1,9 +1,9 @@
 use std::fmt::{Display, Formatter};
-use gdk::RGBA;
+use gdk4::RGBA;
 use serde::Deserialize;
 
-fn f(value: i32) -> f64 {
-    return (value as f64) / (0xffff as f64);
+fn f(value: i32) -> f32 {
+    return (value as f32) / (0xffff as f32);
 }
 
 #[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq)]

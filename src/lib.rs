@@ -11,18 +11,17 @@ use dbus::channel::Sender;
 use dbus::Message;
 use eyre::ContextCompat;
 use eyre::eyre;
-use gdk::Display;
-use gdk::prelude::MonitorExt;
-use gtk::AccelGroup;
-use gtk::Application;
-use gtk::ApplicationWindow;
-use gtk::gio::DBusSignalFlags;
-use gtk::Notebook;
-use gtk::prelude::ApplicationExt;
-use gtk::prelude::ContainerExt;
-use gtk::prelude::GtkWindowExt;
-use gtk::prelude::NotebookExt;
-use gtk::prelude::WidgetExt;
+use gdk4::{Display, Monitor};
+use gdk4::prelude::MonitorExt;
+use gdk4::traits::DisplayExt;
+use glib::Cast;
+use gtk4::{Application, style_context_add_provider_for_display};
+use gtk4::ApplicationWindow;
+use gtk4::gio::DBusSignalFlags;
+use gtk4::Notebook;
+use gtk4::prelude::ApplicationExt;
+use gtk4::prelude::GtkWindowExt;
+use gtk4::prelude::WidgetExt;
 use log::{debug, trace};
 
 use crate::config::cfg::ZohaCfg;
@@ -30,7 +29,7 @@ use crate::config::color::Pallet;
 use crate::ui::actions::set_app_actions;
 use crate::ui::actions::set_win_actions;
 use crate::ui::terminal::ZohaTerminal;
-use crate::ui::window::add_tab;
+use crate::ui::window::{add_tab, css, set_focus};
 use crate::ui::window::create_notebook;
 use crate::ui::window::create_window;
 use crate::ui::window::init_window;
@@ -52,7 +51,7 @@ pub struct ZohaCtx {
     pub cfg: Rc<ZohaCfg>,
     pub font_scale: f64,
     pub fullscreen: bool,
-    pub accel_group: AccelGroup,
+    // pub accel_group: AccelGroup,
     pub showing: bool,
     pub terminals: Rc<RefCell<HashMap<u32, ZohaTerminal>>>,
     pub transparency_enabled: bool,
@@ -65,10 +64,9 @@ impl Debug for ZohaCtx {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "ZohaCtx[fullscreen={}, scaling_factor={}, accel_group={:?}, window={}]",
+            "ZohaCtx[fullscreen={}, scaling_factor={}, window={}]",
             self.fullscreen,
             self.font_scale,
-            self.accel_group,
             if self.window.is_some() {
                 "set"
             } else {
@@ -85,7 +83,7 @@ impl ZohaCtx {
             cfg,
             font_scale: 1.0,
             fullscreen,
-            accel_group: AccelGroup::new(),
+            // accel_group: AccelGroup::new(),
             showing: true,
             terminals: Rc::new(RefCell::new(HashMap::new())),
             transparency_enabled: true,
@@ -102,7 +100,7 @@ impl ZohaCtx {
         }
 
         debug!("setting window");
-        window.add_accel_group(&self.accel_group);
+        // window.add_accel_group(&self.accel_group);
         self.window = Some(window);
 
         return Ok(());
@@ -159,27 +157,18 @@ pub fn on_app_activate(ctx: &Rc<RefCell<ZohaCtx>>,
                        app: &Application) -> eyre::Result<()> {
     let window: ApplicationWindow = create_window(&ctx.borrow().cfg, app).build();
 
-    // let ctx_on_focus = Rc::clone(ctx);
-    // window.connect_activate_focus(move |_| {
-    //     match ctx_on_focus.borrow().get_notebook() {
-    //         None => eprintln!("missing notebook on window activate"),
-    //         Some(notebook) => {
-    //             let page = notebook.page();
-    //
-    //             if page < 0 {
-    //                 eprintln!("no active page on notebook on window focus");
-    //                 return;
-    //             }
-    //
-    //             match ctx_on_focus.borrow().terminals.borrow().get(&(page as usize)) {
-    //                 None => eprintln!("missing term on window focus: {}", page),
-    //                 Some(term) => {
-    //                     term.vte.grab_focus();
-    //                 }
-    //             }
-    //         }
-    //     };
-    // });
+    window.add_css_class("Mama");
+
+    style_context_add_provider_for_display(
+        &window.display(),
+        &css(),
+        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
+    );
+
+    let ctx_on_focus = Rc::clone(ctx);
+    window.connect_activate_focus(move |_| {
+        set_focus(&ctx_on_focus);
+    });
 
     if let Err(err) = init_window(&mut ctx.borrow_mut(), window) {
         if format!("{}", err) == "window already set" {
@@ -205,7 +194,7 @@ pub fn on_app_activate(ctx: &Rc<RefCell<ZohaCtx>>,
         ctx.borrow().get_window().unwrap().hide();
         ctx.borrow_mut().showing = false;
     } else {
-        ctx.borrow().get_window().unwrap().show_all();
+        ctx.borrow().get_window().unwrap().show();
     }
 
     return Ok(());
@@ -241,7 +230,7 @@ pub fn toggle(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.hide();
         ctx.showing = false;
     } else {
-        window.show_all();
+        window.show();
         window.present();
         ctx.showing = true;
     }
@@ -273,22 +262,36 @@ pub fn list_monitors() -> eyre::Result<Vec<String>> {
     let display: Display = Display::default().wrap_err_with(|| "could not get display")?;
 
     let mut monitors = vec![];
-    for m in 0..display.n_monitors() {
-        if let Some(monitor) = display.monitor(m) {
-            let model: String = monitor
-                .model()
-                .map(|it| it.to_string())
-                .unwrap_or_else(|| "?".to_string());
 
-            monitors.push(format!("{} - {}", m, model));
+    let mut i = 0usize;
+    for m in display.monitors().into_iter() {
+        match m {
+            Ok(m) => {
+                match m.downcast_ref::<Monitor>() {
+                    None => {
+                        monitors.push(format!("{i} ?"));
+                    }
+                    Some(m) => {
+                        let model = m
+                            .model()
+                            .map(|it| it.to_string())
+                            .unwrap_or_else(|| "?".to_string());
+                        monitors.push(format!("{} {}", i, model))
+                    }
+                }
+            }
+            Err(err) => {
+                panic!("list mutated? {}", err);
+            }
         }
+
+        i += 1;
     }
 
     return Ok(monitors);
 }
 
 pub fn print_config(cfg: ZohaCfg) {
-
     let or_string = || "".to_string();
 
     println!("font.font = {}", cfg.font.font);

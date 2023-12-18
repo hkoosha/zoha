@@ -1,15 +1,15 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use gdk::gio::Action;
+use gdk4::gio::Action;
 use glib::clone;
-use gtk::Application;
-use gtk::ApplicationWindow;
-use gtk::gio::SimpleAction;
-use gtk::prelude::ActionMapExt;
-use gtk::prelude::ApplicationWindowExt;
-use gtk::prelude::GtkApplicationExt;
-use gtk::prelude::GtkWindowExt;
+use gtk4::Application;
+use gtk4::ApplicationWindow;
+use gtk4::gio::SimpleAction;
+use gtk4::prelude::ActionMapExt;
+use gtk4::prelude::ApplicationWindowExt;
+use gtk4::prelude::GtkApplicationExt;
+use gtk4::prelude::GtkWindowExt;
 use log::debug;
 
 use crate::ui::window::add_tab;
@@ -184,6 +184,7 @@ pub fn set_app_actions(ctx: &ZohaCtx,
     // ---------------------------------
 
     if let Some(transparency_toggle) = &ctx.cfg.keys.transparency_toggle {
+        eprintln!("toggler: {}", transparency_toggle);
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TRANSPARENCY_TOGGLE),
             &[&transparency_toggle],

@@ -6,16 +6,17 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use gdk::{ModifierType, Monitor};
-use gdk::prelude::MonitorExt;
+use gdk4::{Monitor, RGBA};
+use gdk4::prelude::MonitorExt;
+use gdk4::traits::DisplayExt;
 #[allow(unused_imports)] // IntelliJ goes bananas without this.
 use glib::bitflags::Flags;
-use gtk::{accelerator_parse, PositionType};
-use gtk::gdk::RGBA;
+use glib::Cast;
+use gtk4::{accelerator_parse, PositionType};
 use pango::FontDescription;
 use serde::Deserialize;
 use thiserror::Error;
-use zoha_vte::CursorBlinkMode;
+use vte4::CursorBlinkMode;
 
 use crate::config::args::ZohaArgs;
 use crate::config::color::Pallet;
@@ -89,11 +90,11 @@ impl Display for CursorShape {
 }
 
 impl CursorShape {
-    pub fn to_vte(&self) -> zoha_vte::CursorShape {
+    pub fn to_vte(&self) -> vte4::CursorShape {
         match self {
-            CursorShape::Block => zoha_vte::CursorShape::Block,
-            CursorShape::IBeam => zoha_vte::CursorShape::Ibeam,
-            CursorShape::Underline => zoha_vte::CursorShape::Underline,
+            CursorShape::Block => vte4::CursorShape::Block,
+            CursorShape::IBeam => vte4::CursorShape::Ibeam,
+            CursorShape::Underline => vte4::CursorShape::Underline,
         }
     }
 }
@@ -120,13 +121,13 @@ impl Display for EraseBinding {
 }
 
 impl EraseBinding {
-    pub fn to_vte(&self) -> zoha_vte::EraseBinding {
+    pub fn to_vte(&self) -> vte4::EraseBinding {
         match self {
-            EraseBinding::Auto => zoha_vte::EraseBinding::Auto,
-            EraseBinding::AsciiBackspace => zoha_vte::EraseBinding::AsciiBackspace,
-            EraseBinding::AsciiDelete => zoha_vte::EraseBinding::AsciiDelete,
-            EraseBinding::DeleteSequence => zoha_vte::EraseBinding::DeleteSequence,
-            EraseBinding::Tty => zoha_vte::EraseBinding::Tty,
+            EraseBinding::Auto => vte4::EraseBinding::Auto,
+            EraseBinding::AsciiBackspace => vte4::EraseBinding::AsciiBackspace,
+            EraseBinding::AsciiDelete => vte4::EraseBinding::AsciiDelete,
+            EraseBinding::DeleteSequence => vte4::EraseBinding::DeleteSequence,
+            EraseBinding::Tty => vte4::EraseBinding::Tty,
         }
     }
 }
@@ -511,12 +512,18 @@ pub struct CfgDisplay {
 
 impl CfgDisplay {
     pub fn get_monitor(&self) -> Monitor {
-        let display = gdk::Display::default().expect("could not get display");
+        let display = gdk4::Display::default().expect("could not get display");
 
         return match &self.monitor {
             None => display
-                .primary_monitor()
-                .expect("no primary monitor present"),
+                .monitors()
+                .into_iter()
+                .nth(0)
+                .expect("no primary monitor present")
+                .expect("no primary monitor present")
+                .downcast::<Monitor>()
+                .expect("could not cast to Monitor"),
+
             Some(index_or_model) => {
                 // If user copies the output of `zoha --list-monitors` directly, it'll be
                 // like `2 - DP-5` and we just want the first part.
@@ -532,24 +539,22 @@ impl CfgDisplay {
 
                 match cfg_model.parse::<u8>() {
                     Ok(index) => {
-                        return match display.monitor(index as i32) {
-                            None => {
-                                eprintln!("using primary monitor, \
-                                           configured monitor not found: {}", index);
-                                display.primary_monitor()
-                                    .expect("could not get primary monitor")
+                        let mut i = 0;
+                        for m in display.monitors().into_iter() {
+                            let m = m.expect("failed to get monitor");
+                            let m = m.downcast::<Monitor>().expect("failed to cast to Monitor");
+                            if i == index {
+                                return m;
                             }
-                            Some(monitor) => monitor,
-                        };
+                            i += 1;
+                        }
                     }
                     Err(_) => {
-                        for m in 0..display.n_monitors() {
-                            if let Some(monitor) = display.monitor(m) {
-                                if let Some(model) = monitor.model() {
-                                    if model == cfg_model {
-                                        return monitor;
-                                    }
-                                }
+                        for m in display.monitors().into_iter() {
+                            let m = m.expect("failed to get monitor");
+                            let m = m.downcast::<Monitor>().expect("failed to cast to Monitor");
+                            if m.model().map(|it| it.to_string()).unwrap_or_else(|| "".to_string()) == cfg_model {
+                                return m;
                             }
                         }
                     }
@@ -557,14 +562,21 @@ impl CfgDisplay {
 
                 eprintln!("using primary monitor, \
                            configured monitor not found: {}", index_or_model);
-                display.primary_monitor().expect("could not get primary monitor")
+                display
+                    .monitors()
+                    .into_iter()
+                    .nth(0)
+                    .expect("no primary monitor present")
+                    .expect("no primary monitor present")
+                    .downcast::<Monitor>()
+                    .expect("could not cast to Monitor")
             }
         };
     }
 
     pub fn get_width(&self) -> u32 {
         let monitor: Monitor = self.get_monitor();
-        let monitor_width: u32 = monitor.workarea().width().clamp(1, i32::MAX) as u32;
+        let monitor_width: u32 = monitor.geometry().width().clamp(1, i32::MAX) as u32;
 
         return
             if let Some(percentage) = self.width_percentage {
@@ -585,7 +597,7 @@ impl CfgDisplay {
 
     pub fn get_height(&self) -> u32 {
         let monitor: Monitor = self.get_monitor();
-        let monitor_height: u32 = monitor.workarea().height().clamp(1, i32::MAX) as u32;
+        let monitor_height: u32 = monitor.geometry().height().clamp(1, i32::MAX) as u32;
 
         return
             if let Some(percentage) = self.height_percentage {
@@ -735,7 +747,7 @@ mod defaults {
     pub(super) const ACTION_COPY: &str = "<Ctrl><Shift>c";
     pub(super) const ACTION_PASTE: &str = "<Ctrl><Shift>v";
     pub(super) const ACTION_QUIT: &str = "<Ctrl><Shift><Alt>q";
-    pub(super) const ACTION_TRANSPARENCY_TOGGLE: &str = "<Ctrl><Alt>F12";
+    pub(super) const ACTION_TRANSPARENCY_TOGGLE: &str = "F12";
     pub(super) const ACTION_FONT_SIZE_INC: &str = "<Ctrl><Alt>equal";
     pub(super) const ACTION_FONT_SIZE_DEC: &str = "<Ctrl><Alt>minus";
     pub(super) const ACTION_FONT_SIZE_RESET: &str = "<Ctrl><Alt>0";
@@ -761,9 +773,9 @@ fn try_parse_color(
                     None
                 } else {
                     Some(RGBA::new(
-                        ((code / (256 * 256)) as f64) / (0xFFFF as f64),
-                        (((code / 256) % 256) as f64) / (0xFFFF as f64),
-                        ((code % 256) as f64) / (0xFFFF as f64),
+                        ((code / (256 * 256)) as f32) / (0xFFFF as f32),
+                        (((code / 256) % 256) as f32) / (0xFFFF as f32),
+                        ((code % 256) as f32) / (0xFFFF as f32),
                         1.0,
                     ))
                 }
@@ -1260,9 +1272,9 @@ fn sanitize_key(key: Option<String>,
                 default: &str,
                 seen: &mut HashSet<String>) -> Option<String> {
     fn do_sanitize_key(key: &str) -> Option<String> {
-        let (k, _): (u32, ModifierType) = accelerator_parse(key);
+        let parse = accelerator_parse(key);
 
-        return if k > 0 {
+        return if parse.is_some() {
             Some(key.to_string())
         } else {
             eprintln!("failed to parse accelerator: {}", &key);

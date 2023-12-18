@@ -7,22 +7,21 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::string::ToString;
 
-use gdk::gio;
-use gdk::RGBA;
+use gdk4::gio;
+use gdk4::RGBA;
 use glib::ObjectExt;
 use glib::Pid;
 use glib::SignalHandlerId;
 use glib::SpawnFlags;
-use gtk::Orientation;
-use gtk::prelude::BoxExt;
-use gtk::prelude::ScrollableExt;
-use gtk::prelude::WidgetExt;
-use gtk::Scrollbar;
+use gtk4::Orientation;
+use gtk4::prelude::ScrollableExt;
+use gtk4::prelude::WidgetExt;
+use gtk4::Scrollbar;
 use log::debug;
-use zoha_vte::Format;
-use zoha_vte::PtyFlags;
-use zoha_vte::Terminal;
-use zoha_vte::traits::TerminalExt;
+use vte4::{Format, TerminalExtManual};
+use vte4::PtyFlags;
+use vte4::Terminal;
+use vte4::TerminalExt;
 
 use crate::config::cfg::ScrollbarPosition;
 use crate::config::cfg::TerminalExitBehavior;
@@ -34,14 +33,14 @@ struct ZohaTerminalCtx {
     pid: Option<Pid>,
     // dropped_to_default_shell: bool,
     // working_dir: Option<String>,
-    hbox: gtk::Box,
+    hbox: gtk4::Box,
     exit_handler: Option<SignalHandlerId>,
 }
 
 
 #[derive(Clone)]
 pub struct ZohaTerminal {
-    pub hbox: gtk::Box,
+    pub hbox: gtk4::Box,
     pub vte: Terminal,
     pub scrollbar: Scrollbar,
     pub tab_counter: usize,
@@ -88,11 +87,16 @@ impl ZohaTerminal {
 
             vte.set_color_cursor(Some(&cfg.color.cursor));
             vte.set_color_cursor_foreground(Some(&cfg.color.bg));
+
+            let owned: Vec<RGBA> = cfg.color.user_pallet().into_iter().map(|it| it).collect();
+            let collected: Vec<&RGBA> = owned.iter().map(|it| it).collect();
             vte.set_colors(
                 Some(&cfg.color.fg),
                 Some(&cfg.color.bg),
-                &cfg.color.user_pallet(),
+                &collected,
             );
+
+            vte.add_css_class("Mama");
 
             vte
         };
@@ -101,20 +105,20 @@ impl ZohaTerminal {
             Orientation::Vertical,
             vte.vadjustment().as_ref(),
         );
-        scrollbar.set_no_show_all(true);
+        // scrollbar.set_no_show_all(true);
 
-        let hbox = gtk::Box::new(Orientation::Horizontal, 0);
-        hbox.pack_end(&scrollbar, false, false, 0);
-        hbox.pack_end(&vte, true, true, 0);
-        hbox.show_all();
+        let hbox = gtk4::Box::new(Orientation::Horizontal, 0);
+        // hbox.pack_end(&scrollbar, false);
+        // hbox.pack_end(&vte, true);
+        // hbox.show_all();
 
         match ctx.borrow().cfg.display.scrollbar_position {
             ScrollbarPosition::Left => {
-                hbox.reorder_child(&scrollbar, 1);
+                // hbox.reorder_child(&scrollbar, 1);
                 scrollbar.show();
             }
             ScrollbarPosition::Right => {
-                hbox.reorder_child(&scrollbar, 0);
+                // hbox.reorder_child(&scrollbar, 0);
                 scrollbar.show();
             }
             ScrollbarPosition::Hidden => scrollbar.hide(),
@@ -213,32 +217,35 @@ impl ZohaTerminal {
 
         let shell: String = self.ctx.borrow().ctx.borrow().cfg.process.command.clone();
 
-        let pid = match dir {
-            None => self.vte.spawn_sync(
+        let callback_ctx = Rc::clone(&self.ctx);
+        match dir {
+            None => self.vte.spawn_async(
                 PtyFlags::DEFAULT,
                 None,
-                &[
-                    Path::new(&shell),
-                ],
+                &[&shell],
                 &[],
                 SpawnFlags::DEFAULT,
-                Some(&mut || {}),
+                || {},
+                10,
                 None::<&gio::Cancellable>,
-            )?,
-            Some(dir) => self.vte.spawn_sync(
+                move |result| {
+                    callback_ctx.borrow_mut().pid = Some(result.expect("could not launch terminal"));
+                },
+            ),
+            Some(dir) => self.vte.spawn_async(
                 PtyFlags::DEFAULT,
                 Some(&dir),
-                &[
-                    Path::new(&shell),
-                ],
+                &[&shell],
                 &[],
                 SpawnFlags::DEFAULT,
-                Some(&mut || {}),
+                || {},
+                10,
                 None::<&gio::Cancellable>,
-            )?,
+                move |result| {
+                    callback_ctx.borrow_mut().pid = Some(result.expect("could not launch terminal"));
+                },
+            ),
         };
-
-        self.ctx.borrow_mut().pid = Some(pid);
 
         self.enforce_font_size();
 
@@ -273,6 +280,7 @@ impl ZohaTerminal {
         self.vte.paste_clipboard();
     }
 
+    // TODO transparent not working.
     pub fn enforce_transparency(&self) {
         let enabled: bool = self.ctx.borrow().ctx.borrow().transparency_enabled;
 
@@ -281,10 +289,12 @@ impl ZohaTerminal {
             bg.set_alpha(1.0);
         }
 
+        let owned: Vec<RGBA> = self.ctx.borrow().ctx.borrow().cfg.color.user_pallet().into_iter().map(|it| it).collect();
+        let collected: Vec<&RGBA> = owned.iter().map(|it| it).collect();
         self.vte.set_colors(
             Some(&self.ctx.borrow().ctx.borrow().cfg.color.fg),
             Some(&bg),
-            &self.ctx.borrow().ctx.borrow().cfg.color.user_pallet(),
+            &collected,
         );
     }
 
