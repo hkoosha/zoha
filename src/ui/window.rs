@@ -2,7 +2,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use gdk::EventMask;
 use glib::Cast;
 use gtk::Application;
 use gtk::ApplicationWindow;
@@ -100,22 +99,13 @@ pub fn init_window(ctx: &mut ZohaCtx,
             if let Some(visual) = screen.rgba_visual().or_else(|| screen.system_visual()) {
                 window.set_visual(Some(&visual));
             } else {
-                debug!("no visual set on window due to missing visual");
+                eprintln!("no visual set on window due to missing visual");
             }
         } else {
-            debug!("no visual set on window due to screen not composited");
+            eprintln!("no visual set on window due to screen not composited");
         }
     } else {
         eprintln!("missing gtk screen for set visual on window init");
-    }
-
-    // TODO: needed? note: this is for auto-hide ticker not implemented yet.
-    // FROM TILDA: gdk_x11_get_server_time call will hang if GDK_PROPERTY_CHANGE_MASK is not set.
-    if let Some(screen) = GtkWindowExt::screen(&window) {
-        if let Some(root_window) = screen.root_window() {
-            let events: EventMask = root_window.events();
-            root_window.set_events(events & EventMask::PROPERTY_CHANGE_MASK);
-        }
     }
 
     return Ok(());

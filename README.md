@@ -1,5 +1,7 @@
 Drop down terminal inspired by Tilda.
 
+(GTK4 flavor: [hkoosha/zoha4](https://github.com/hkoosha/zoha4))
+
 ```
 $ zoha -h
 A drop down terminal inspired by Tilda
@@ -163,18 +165,18 @@ bg = "rgba(0,0,0,0.8)"
 
 ### [key]
 
-| Config              | Default               | Type   | Notes                                                                                  |
-|---------------------|-----------------------|--------|----------------------------------------------------------------------------------------|
+| Config              | Default              | Type   | Notes                                                                                  |
+|---------------------|----------------------|--------|----------------------------------------------------------------------------------------|
 | copy                | Ctrl-Shift-C         | string | Copy shortcut; valid GTK accelerator specification.                                    |
 | paste               | Ctrl-Shift-V         | string | Paste shortcut; valid GTK accelerator specification.                                   |
-| quit                | Ctrl-Shift-Alt-q    | string | App exit shortcut; valid GTK accelerator specification.                                |
-| transparency_toggle | F12                   | string | Temporarily toggle transparency; valid GTK accelerator specification.                  |
+| quit                | Ctrl-Shift-Alt-q     | string | App exit shortcut; valid GTK accelerator specification.                                |
+| transparency_toggle | F12                  | string | Temporarily toggle transparency; valid GTK accelerator specification.                  |
 | tab_add             | Ctrl-Shift-T         | string | Add a new tab next to current tab; valid GTK accelerator specification.                |
 | tab_close           | Ctrl-Shift-W         | string | Close current tab; valid GTK accelerator specification.                                |
 | tab_move_backward   | Ctrl-Shift-Page_Up   | string | Move the active tab forward among all tabs; valid GTK accelerator specification.       |
 | tab_move_forward    | Ctrl-Shift-Page_Down | string | Move the active tab backward among all tabs; valid GTK accelerator specification.      |
-| tab_goto_next       | Ctrl-Page_Down        | string | Goto next tab; valid GTK accelerator specification.                                    |
-| tab_move_previous   | Ctrl-Page_Down        | string | Goto previous tab; valid GTK accelerator specification.                                |
+| tab_goto_next       | Ctrl-Page_Down       | string | Goto next tab; valid GTK accelerator specification.                                    |
+| tab_move_previous   | Ctrl-Page_Down       | string | Goto previous tab; valid GTK accelerator specification.                                |
 | tab_goto_last       | Ctrl-Alt-9           | string | Goto last tab; valid GTK accelerator specification.                                    |
 | tab_goto_01         | Ctrl-Alt-1           | string | Goto tab number 1; valid GTK accelerator specification.                                |
 | tab_goto_02         | Ctrl-Alt-2           | string | Goto tab number 2; valid GTK accelerator specification.                                |

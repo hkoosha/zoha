@@ -18,6 +18,7 @@ use zoha::config::cfg::ZohaCfg;
 use zoha::connect_gdk_dbus;
 #[cfg(feature = "hack")]
 use zoha::hack::enable_key_grabber_hack;
+#[cfg(feature = "hack")]
 use zoha::hack::list_keycodes;
 use zoha::list_monitors;
 use zoha::on_app_activate;
@@ -97,8 +98,7 @@ fn main() -> Result<()> {
 
     let cfg: Rc<ZohaCfg> = Rc::new(cfg);
 
-    let ctx: ZohaCtx = ZohaCtx::new(cfg);
-    let ctx = Rc::new(RefCell::new(ctx));
+    let ctx = Rc::new(RefCell::new(ZohaCtx::new(cfg)));
     let ctx0 = Rc::clone(&ctx);
 
     #[cfg(feature = "hack")]

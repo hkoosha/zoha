@@ -1,18 +1,23 @@
 [package]
 name = "zoha"
-version = "0.4.4"
+version = "0.4.5"
 edition = "2021"
 authors = ["Koosha Hosseiny <i@koosha.io>"]
 description = "A drop down terminal inspired by Tilda"
 homepage = "https://zoha.rs"
 license = "GPL-3.0"
 readme = "README.md"
+rust-version = "1.60.0"
+repository = "https://github.com/hkoosha/zoha"
 
 [features]
 default = ["hack"]
-"hack" = []
+"hack" = ["dep:device_query"]
 
 [dependencies]
+log = "0.4.20"
+pretty_env_logger = { version = "0.5.0" }
+
 eyre = "0.6"
 thiserror = "1.0"
 
@@ -20,7 +25,7 @@ serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
 
 dirs = "5.0.1"
-clap = { version = "4.4.6", features = ["derive"] }
+clap = { version = "4.4.11", features = ["derive"] }
 
 gtk = "0.18"
 gdk = "0.18"
@@ -31,8 +36,7 @@ pango = { version = "0.18", features = ["v1_50"] }
 # zoha-vte-sys = { path = "../zoha-vte-rs/zoha-vte-sys", features = ["v0_70"] }
 zoha-vte = { version = "0.5.0", features = ["v0_50"] }
 zoha-vte-sys = { version = "0.5.0", features = ["v0_50"] }
-device_query = "1.1.3"
+
 dbus = "0.9.7"
 dbus-crossroads = "0.5.2"
-log = "0.4.20"
-pretty_env_logger = "0.5.0"
+device_query = { version = "1.1.3", optional = true }

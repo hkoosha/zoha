@@ -213,30 +213,17 @@ impl ZohaTerminal {
 
         let shell: String = self.ctx.borrow().ctx.borrow().cfg.process.command.clone();
 
-        let pid = match dir {
-            None => self.vte.spawn_sync(
-                PtyFlags::DEFAULT,
-                None,
-                &[
-                    Path::new(&shell),
-                ],
-                &[],
-                SpawnFlags::DEFAULT,
-                Some(&mut || {}),
-                None::<&gio::Cancellable>,
-            )?,
-            Some(dir) => self.vte.spawn_sync(
-                PtyFlags::DEFAULT,
-                Some(&dir),
-                &[
-                    Path::new(&shell),
-                ],
-                &[],
-                SpawnFlags::DEFAULT,
-                Some(&mut || {}),
-                None::<&gio::Cancellable>,
-            )?,
-        };
+        let pid = self.vte.spawn_sync(
+            PtyFlags::DEFAULT,
+            dir.as_deref(),
+            &[
+                Path::new(&shell),
+            ],
+            &[],
+            SpawnFlags::DEFAULT,
+            Some(&mut || {}),
+            None::<&gio::Cancellable>,
+        )?;
 
         self.ctx.borrow_mut().pid = Some(pid);
 

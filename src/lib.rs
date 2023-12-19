@@ -13,7 +13,6 @@ use eyre::ContextCompat;
 use eyre::eyre;
 use gdk::Display;
 use gdk::prelude::MonitorExt;
-use gtk::AccelGroup;
 use gtk::Application;
 use gtk::ApplicationWindow;
 use gtk::gio::DBusSignalFlags;
@@ -52,7 +51,6 @@ pub struct ZohaCtx {
     pub cfg: Rc<ZohaCfg>,
     pub font_scale: f64,
     pub fullscreen: bool,
-    pub accel_group: AccelGroup,
     pub showing: bool,
     pub terminals: Rc<RefCell<HashMap<u32, ZohaTerminal>>>,
     pub transparency_enabled: bool,
@@ -65,10 +63,9 @@ impl Debug for ZohaCtx {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "ZohaCtx[fullscreen={}, scaling_factor={}, accel_group={:?}, window={}]",
+            "ZohaCtx[fullscreen={}, scaling_factor={}, window={}]",
             self.fullscreen,
             self.font_scale,
-            self.accel_group,
             if self.window.is_some() {
                 "set"
             } else {
@@ -85,7 +82,6 @@ impl ZohaCtx {
             cfg,
             font_scale: 1.0,
             fullscreen,
-            accel_group: AccelGroup::new(),
             showing: true,
             terminals: Rc::new(RefCell::new(HashMap::new())),
             transparency_enabled: true,
@@ -102,7 +98,6 @@ impl ZohaCtx {
         }
 
         debug!("setting window");
-        window.add_accel_group(&self.accel_group);
         self.window = Some(window);
 
         return Ok(());

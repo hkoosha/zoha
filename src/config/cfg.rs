@@ -698,7 +698,7 @@ mod defaults {
     pub(super) const ALWAYS_ON_TOP: bool = true;
     pub(super) const STICKY: bool = true;
     pub(super) const FULLSCREEN: bool = false;
-    pub(super) const BG_COLOR: &str = "rgba(0,0,0,1.0)";
+    pub(super) const BG_COLOR: &str = "rgba(0,0,0,0.85)";
     pub(super) const FG_COLOR: &str = "rgba(255,255,255,1.0)";
     pub(super) const CURSOR_COLOR: &str = "rgba(0,0,0,1.0)";
     pub(super) const TITLE: &str = "Zoha";
@@ -735,7 +735,7 @@ mod defaults {
     pub(super) const ACTION_COPY: &str = "<Ctrl><Shift>c";
     pub(super) const ACTION_PASTE: &str = "<Ctrl><Shift>v";
     pub(super) const ACTION_QUIT: &str = "<Ctrl><Shift><Alt>q";
-    pub(super) const ACTION_TRANSPARENCY_TOGGLE: &str = "<Ctrl><Alt>F12";
+    pub(super) const ACTION_TRANSPARENCY_TOGGLE: &str = "F12";
     pub(super) const ACTION_FONT_SIZE_INC: &str = "<Ctrl><Alt>equal";
     pub(super) const ACTION_FONT_SIZE_DEC: &str = "<Ctrl><Alt>minus";
     pub(super) const ACTION_FONT_SIZE_RESET: &str = "<Ctrl><Alt>0";
