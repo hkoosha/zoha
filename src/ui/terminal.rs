@@ -32,7 +32,6 @@ use crate::ZohaCtx;
 struct ZohaTerminalCtx {
     ctx: Rc<RefCell<ZohaCtx>>,
     pid: Option<Pid>,
-    // dropped_to_default_shell: bool,
     // working_dir: Option<String>,
     hbox: gtk::Box,
     exit_handler: Option<SignalHandlerId>,
@@ -122,19 +121,9 @@ impl ZohaTerminal {
 
         let tab_counter: usize = ctx.borrow().issue_tab_number();
 
-        // let working_dir: Option<String> = ctx
-        //     .borrow()
-        //     .cfg
-        //     .process
-        //     .working_dir
-        //     .as_ref()
-        //     .map(|it| it.to_string());
-
         let term_ctx = Rc::new(RefCell::new(ZohaTerminalCtx {
             ctx,
             pid: None,
-            // dropped_to_default_shell: false,
-            // working_dir,
             hbox: hbox.clone(),
             exit_handler: None,
         }));

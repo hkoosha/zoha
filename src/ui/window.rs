@@ -227,7 +227,6 @@ pub fn remove_page_by_hbox(ctx: &Rc<RefCell<ZohaCtx>>,
             );
 
             notebook.remove(hbox);
-            adjust_tab_bar(ctx);
 
             page
         }
@@ -242,6 +241,8 @@ pub fn remove_page_by_hbox(ctx: &Rc<RefCell<ZohaCtx>>,
 
         on_page_removed(ctx, page);
     }
+
+    adjust_tab_bar(ctx);
 }
 
 pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>,
@@ -263,6 +264,8 @@ pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>,
                         (None, None)
                     }
                     Some(page) => {
+                        trace!("notebook current page on tab_add: {}", page);
+
                         match ctx.borrow().terminals.borrow().get(&page) {
                             None => {
                                 eprintln!("missing term on add tab: {}", page);
@@ -275,6 +278,7 @@ pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>,
                     }
                 }
             } else {
+                trace!("add_tab: no active page");
                 (None, None)
             }
         }
@@ -297,6 +301,8 @@ pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>,
                 &term.hbox,
                 Some(&Label::new(Some("Zoha"))),
             );
+            trace!("tab_add, new_page_index: {}", new_page_index);
+
             notebook.set_current_page(Some(new_page_index));
             notebook.set_tab_reorderable(&term.hbox, true);
 
@@ -313,13 +319,13 @@ pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>,
         }
     };
 
-    adjust_tab_bar(ctx);
-
     ctx
         .borrow()
         .terminals
         .borrow_mut()
         .insert(page, term.clone());
+
+    adjust_tab_bar(ctx);
 
     set_label(ctx, &term, page + 1);
 
@@ -465,15 +471,16 @@ pub fn adjust_tab_bar(ctx: &Rc<RefCell<ZohaCtx>>) {
             if num_pages == 0 {
                 match ctx.borrow().cfg.behavior.last_tab_exit_behavior {
                     LastTabExitBehavior::RestartTerminal => {
-                        debug!("adding a tab after last tab close");
+                        trace!("adding a tab after last tab close");
                         add_tab(ctx, true);
                     }
                     LastTabExitBehavior::RestartTerminalAndHide => {
-                        debug!("adding a tab after last tab close and hiding");
+                        trace!("adding a tab after last tab close and hiding");
                         add_tab(ctx, false);
                         toggle(ctx);
                     }
                     LastTabExitBehavior::Exit => {
+                        trace!("exit on last tab close");
                         if let Some(window) = &ctx.borrow().window {
                             window.close();
                         } else {
@@ -595,7 +602,8 @@ fn get_term(ctx: &Rc<RefCell<ZohaCtx>>,
         .cloned();
 
     if term.is_none() {
-        eprintln!("missing terminal on action callback for: {}", action);
+        eprintln!("missing terminal on action callback for: {}, active page: {}, n_terminals: {}",
+                  action, active_page, ctx.borrow().terminals.borrow().len());
     }
 
     return term;

@@ -154,28 +154,6 @@ pub fn on_app_activate(ctx: &Rc<RefCell<ZohaCtx>>,
                        app: &Application) -> eyre::Result<()> {
     let window: ApplicationWindow = create_window(&ctx.borrow().cfg, app).build();
 
-    // let ctx_on_focus = Rc::clone(ctx);
-    // window.connect_activate_focus(move |_| {
-    //     match ctx_on_focus.borrow().get_notebook() {
-    //         None => eprintln!("missing notebook on window activate"),
-    //         Some(notebook) => {
-    //             let page = notebook.page();
-    //
-    //             if page < 0 {
-    //                 eprintln!("no active page on notebook on window focus");
-    //                 return;
-    //             }
-    //
-    //             match ctx_on_focus.borrow().terminals.borrow().get(&(page as usize)) {
-    //                 None => eprintln!("missing term on window focus: {}", page),
-    //                 Some(term) => {
-    //                     term.vte.grab_focus();
-    //                 }
-    //             }
-    //         }
-    //     };
-    // });
-
     if let Err(err) = init_window(&mut ctx.borrow_mut(), window) {
         if format!("{}", err) == "window already set" {
             return Err(eyre!("app already active"));
