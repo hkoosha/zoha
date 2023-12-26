@@ -4,7 +4,9 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::fmt::Formatter;
+use std::ops::Sub;
 use std::rc::Rc;
+use std::time::{Duration, SystemTime};
 
 use dbus::blocking::Connection;
 use dbus::channel::Sender;
@@ -13,6 +15,7 @@ use eyre::ContextCompat;
 use eyre::eyre;
 use gdk::Display;
 use gdk::prelude::MonitorExt;
+use glib::Propagation;
 use gtk::Application;
 use gtk::ApplicationWindow;
 use gtk::gio::DBusSignalFlags;
@@ -22,7 +25,9 @@ use gtk::prelude::ContainerExt;
 use gtk::prelude::GtkWindowExt;
 use gtk::prelude::NotebookExt;
 use gtk::prelude::WidgetExt;
-use log::{debug, trace};
+use log::debug;
+use log::error;
+use log::trace;
 
 use crate::config::cfg::ZohaCfg;
 use crate::config::color::Pallet;
@@ -54,6 +59,7 @@ pub struct ZohaCtx {
     pub showing: bool,
     pub terminals: Rc<RefCell<HashMap<u32, ZohaTerminal>>>,
     pub transparency_enabled: bool,
+    pub last_toggle: SystemTime,
     tab_counter: Rc<RefCell<TabCounter>>,
     window: Option<ApplicationWindow>,
     notebook: Option<Notebook>,
@@ -85,6 +91,7 @@ impl ZohaCtx {
             showing: true,
             terminals: Rc::new(RefCell::new(HashMap::new())),
             transparency_enabled: true,
+            last_toggle: SystemTime::now().sub(Duration::from_secs(3600)),
             window: None,
             notebook: None,
             tab_counter: Rc::new(RefCell::new(TabCounter(1))),
@@ -160,6 +167,15 @@ pub fn on_app_activate(ctx: &Rc<RefCell<ZohaCtx>>,
         }
     }
 
+    let focus_ctx = Rc::clone(ctx);
+    ctx.borrow().get_window().unwrap().connect_focus_out_event(move |_, _| {
+        let enabled: bool = focus_ctx.borrow().cfg.behavior.hide_on_focus_loss;
+        if enabled {
+            toggle(&focus_ctx);
+        }
+        return Propagation::Proceed;
+    });
+
     set_app_actions(&ctx.borrow(), app);
     set_win_actions(ctx);
 
@@ -206,6 +222,24 @@ pub fn connect_gdk_dbus(ctx: &Rc<RefCell<ZohaCtx>>,
 pub fn toggle(ctx: &Rc<RefCell<ZohaCtx>>) {
     let mut ctx = ctx.borrow_mut();
 
+    let wait = 50u128;
+    let now = SystemTime::now();
+    let diff = now.duration_since(ctx.last_toggle)
+        .unwrap_or_else(|e| {
+            error!("failed to get system time: {}", e);
+            Duration::from_secs(0)
+        })
+        .as_millis();
+
+    if diff < wait {
+        trace!(
+            "not toggling, as toggle event already happened less than {} milliseconds before",
+            wait
+        );
+
+        return;
+    }
+
     let window: &ApplicationWindow = ctx
         .get_window()
         .expect("application window missing while trying to toggle visibility");
@@ -218,6 +252,8 @@ pub fn toggle(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.present();
         ctx.showing = true;
     }
+
+    ctx.last_toggle = SystemTime::now();
 }
 
 pub fn send_toggle_signal_through_dbus() -> eyre::Result<()> {
@@ -261,7 +297,6 @@ pub fn list_monitors() -> eyre::Result<Vec<String>> {
 }
 
 pub fn print_config(cfg: ZohaCfg) {
-
     let or_string = || "".to_string();
 
     println!("font.font = {}", cfg.font.font);

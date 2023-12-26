@@ -1,16 +1,21 @@
-use std::cmp::{max, min};
+use std::cmp::max;
+use std::cmp::min;
 use std::collections::HashSet;
-use std::fmt::{Display, Formatter};
+use std::fmt::Display;
+use std::fmt::Formatter;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
-use std::path::{Path, PathBuf};
+use std::path::Path;
+use std::path::PathBuf;
 use std::str::FromStr;
 
-use gdk::{ModifierType, Monitor};
+use gdk::ModifierType;
+use gdk::Monitor;
 use gdk::prelude::MonitorExt;
 #[allow(unused_imports)] // IntelliJ goes bananas without this.
 use glib::bitflags::Flags;
-use gtk::{accelerator_parse, PositionType};
+use gtk::accelerator_parse;
+use gtk::PositionType;
 use gtk::gdk::RGBA;
 use pango::FontDescription;
 use serde::Deserialize;
@@ -294,6 +299,7 @@ struct RawCfgTerminal {
 struct RawCfgBehavior {
     terminal_exit_behavior: Option<TerminalExitBehavior>,
     last_tab_exit_behavior: Option<LastTabExitBehavior>,
+    hide_on_focus_loss: Option<bool>,
     // prompt_on_exit: Option<bool>,
 }
 
@@ -532,15 +538,13 @@ impl CfgDisplay {
 
                 match cfg_model.parse::<u8>() {
                     Ok(index) => {
-                        return match display.monitor(index as i32) {
-                            None => {
-                                eprintln!("using primary monitor, \
+                        return display.monitor(index as i32).unwrap_or_else(|| {
+                            eprintln!("using primary monitor, \
                                            configured monitor not found: {}", index);
-                                display.primary_monitor()
-                                    .expect("could not get primary monitor")
-                            }
-                            Some(monitor) => monitor,
-                        };
+                            display
+                                .primary_monitor()
+                                .expect("could not get primary monitor")
+                        });
                     }
                     Err(_) => {
                         for m in 0..display.n_monitors() {
@@ -663,6 +667,7 @@ impl CfgTerminal {
 pub struct CfgBehavior {
     pub terminal_exit_behavior: TerminalExitBehavior,
     pub last_tab_exit_behavior: LastTabExitBehavior,
+    pub hide_on_focus_loss: bool,
     // pub prompt_on_exit: bool,
 }
 
@@ -714,8 +719,8 @@ mod defaults {
     pub(super) const TAB_NUM_CHARS: i8 = 25;
     // pub(super) const PROMPT_ON_EXIT: bool = false;
     pub(super) const TAB_SCROLL_WRAP: bool = true;
-
     pub(super) const TOGGLE_KEYCODE: &str = "F1";
+    pub(super) const HIDE_ON_FOCUS_LOSS: bool = false;
 
     pub(super) const ACTION_TAB_ADD: &str = "<Ctrl><Shift>t";
     pub(super) const ACTION_TAB_CLOSE: &str = "<Ctrl><Shift>w";
@@ -1063,6 +1068,8 @@ impl ZohaCfg {
                             .unwrap_or(TerminalExitBehavior::ExitTerminal),
                         last_tab_exit_behavior: raw.behavior.last_tab_exit_behavior
                             .unwrap_or(LastTabExitBehavior::RestartTerminal),
+                        hide_on_focus_loss: raw.behavior.hide_on_focus_loss
+                            .unwrap_or(HIDE_ON_FOCUS_LOSS),
                         // prompt_on_exit: raw.behavior.prompt_on_exit
                         //     .unwrap_or(PROMPT_ON_EXIT),
                     },
@@ -1175,6 +1182,7 @@ impl Default for ZohaCfg {
             behavior: CfgBehavior {
                 terminal_exit_behavior: TerminalExitBehavior::ExitTerminal,
                 last_tab_exit_behavior: LastTabExitBehavior::RestartTerminal,
+                hide_on_focus_loss: HIDE_ON_FOCUS_LOSS,
                 // prompt_on_exit: PROMPT_ON_EXIT,
             },
             #[cfg(feature = "hack")]
