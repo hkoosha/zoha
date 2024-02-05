@@ -30,7 +30,7 @@ clap = { version = "4.4.11", features = ["derive"] }
 gtk = "0.18"
 gdk = "0.18"
 glib = "0.18"
-pango = { version = "0.18", features = ["v1_50"] }
+pango = { version = "0.19", features = ["v1_50"] }
 
 # zoha-vte = { path = "../zoha-vte-rs/zoha-vte", features = ["v0_70"] }
 # zoha-vte-sys = { path = "../zoha-vte-rs/zoha-vte-sys", features = ["v0_70"] }
