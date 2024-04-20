@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use gdk::gio::Action;
-use glib::clone;
+use gtk::glib::clone;
 use gtk::Application;
 use gtk::ApplicationWindow;
 use gtk::gio::SimpleAction;

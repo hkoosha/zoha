@@ -8,8 +8,8 @@ use std::rc::Rc;
 use std::string::ToString;
 
 use gdk::gio;
+use gdk::glib::ObjectExt;
 use gdk::RGBA;
-use glib::ObjectExt;
 use glib::Pid;
 use glib::SignalHandlerId;
 use glib::SpawnFlags;

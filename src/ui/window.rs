@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use gdk::glib::Cast;
 
-use glib::Cast;
 use gtk::Application;
 use gtk::ApplicationWindow;
 use gtk::builders::ApplicationBuilder;
