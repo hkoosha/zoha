@@ -26,7 +26,7 @@ use crate::ui::window::move_backward;
 use crate::ui::window::move_forward;
 use crate::ui::window::paste;
 use crate::ui::window::toggle_transparency;
-use crate::ZohaCtx;
+use crate::app::context::ZohaCtx;
 
 const ACTION__WIN__QUIT: &str = "quit";
 const ACTION__ZOHA__TAB_ADD: &str = "zoha.tab_add";
@@ -56,112 +56,112 @@ pub fn set_app_actions(ctx: &ZohaCtx,
     if let Some(quit) = &ctx.cfg.keys.quit {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__WIN__QUIT),
-            &[&quit],
+            &[quit],
         );
     }
 
     if let Some(tab_add) = &ctx.cfg.keys.tab_add {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_ADD),
-            &[&tab_add],
+            &[tab_add],
         );
     }
 
     if let Some(tab_close) = &ctx.cfg.keys.tab_close {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_CLOSE),
-            &[&tab_close],
+            &[tab_close],
         );
     }
 
     if let Some(tab_move_fwd) = &ctx.cfg.keys.tab_move_forward {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_MOVE_FORWARD),
-            &[&tab_move_fwd],
+            &[tab_move_fwd],
         );
     }
 
     if let Some(tab_move_bkw) = &ctx.cfg.keys.tab_move_backward {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_MOVE_BACKWARD),
-            &[&tab_move_bkw],
+            &[tab_move_bkw],
         );
     }
 
     if let Some(tab_goto_next) = &ctx.cfg.keys.tab_goto_next {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_GOTO_NEXT),
-            &[&tab_goto_next],
+            &[tab_goto_next],
         );
     }
 
     if let Some(tab_goto_previous) = &ctx.cfg.keys.tab_goto_previous {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_GOTO_PREVIOUS),
-            &[&tab_goto_previous],
+            &[tab_goto_previous],
         );
     }
 
     if let Some(tab_goto_last) = &ctx.cfg.keys.tab_goto_last {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_GOTO_LAST),
-            &[&tab_goto_last],
+            &[tab_goto_last],
         );
     }
 
     if let Some(tab_goto_01) = &ctx.cfg.keys.tab_goto_01 {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_GOTO_01),
-            &[&tab_goto_01],
+            &[tab_goto_01],
         );
     }
 
     if let Some(tab_goto_02) = &ctx.cfg.keys.tab_goto_02 {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_GOTO_02),
-            &[&tab_goto_02],
+            &[tab_goto_02],
         );
     }
 
     if let Some(tab_goto_03) = &ctx.cfg.keys.tab_goto_03 {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_GOTO_03),
-            &[&tab_goto_03],
+            &[tab_goto_03],
         );
     }
 
     if let Some(tab_goto_04) = &ctx.cfg.keys.tab_goto_04 {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_GOTO_04),
-            &[&tab_goto_04],
+            &[tab_goto_04],
         );
     }
 
     if let Some(tab_goto_05) = &ctx.cfg.keys.tab_goto_05 {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_GOTO_05),
-            &[&tab_goto_05],
+            &[tab_goto_05],
         );
     }
 
     if let Some(tab_goto_06) = &ctx.cfg.keys.tab_goto_06 {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_GOTO_06),
-            &[&tab_goto_06],
+            &[tab_goto_06],
         );
     }
 
     if let Some(tab_goto_07) = &ctx.cfg.keys.tab_goto_07 {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_GOTO_07),
-            &[&tab_goto_07],
+            &[tab_goto_07],
         );
     }
 
     if let Some(tab_goto_08) = &ctx.cfg.keys.tab_goto_08 {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TAB_GOTO_08),
-            &[&tab_goto_08],
+            &[tab_goto_08],
         );
     }
 
@@ -170,14 +170,14 @@ pub fn set_app_actions(ctx: &ZohaCtx,
     if let Some(copy) = &ctx.cfg.keys.copy {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__COPY),
-            &[&copy],
+            &[copy],
         );
     }
 
     if let Some(paste) = &ctx.cfg.keys.paste {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__PASTE),
-            &[&paste],
+            &[paste],
         );
     }
 
@@ -186,7 +186,7 @@ pub fn set_app_actions(ctx: &ZohaCtx,
     if let Some(transparency_toggle) = &ctx.cfg.keys.transparency_toggle {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__TRANSPARENCY_TOGGLE),
-            &[&transparency_toggle],
+            &[transparency_toggle],
         );
     }
 
@@ -195,21 +195,21 @@ pub fn set_app_actions(ctx: &ZohaCtx,
     if let Some(font_inc) = &ctx.cfg.keys.font_size_inc {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__FONT_INC),
-            &[&font_inc],
+            &[font_inc],
         );
     }
 
     if let Some(font_dec) = &ctx.cfg.keys.font_size_dec {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__FONT_DEC),
-            &[&font_dec],
+            &[font_dec],
         );
     }
 
     if let Some(font_reset) = &ctx.cfg.keys.font_size_reset {
         application.set_accels_for_action(
             &format!("win.{}", ACTION__ZOHA__FONT_RESET),
-            &[&font_reset],
+            &[font_reset],
         );
     }
 }

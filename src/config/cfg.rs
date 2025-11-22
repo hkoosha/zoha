@@ -303,12 +303,6 @@ struct RawCfgBehavior {
     // prompt_on_exit: Option<bool>,
 }
 
-#[cfg(feature = "hack")]
-#[derive(Deserialize, Debug, Default)]
-struct RawCfgHack {
-    toggle: Option<Vec<String>>,
-}
-
 #[derive(Deserialize, Debug, Default)]
 struct RawCfg {
     #[serde(default)]
@@ -325,9 +319,6 @@ struct RawCfg {
     terminal: RawCfgTerminal,
     #[serde(default)]
     behavior: RawCfgBehavior,
-    #[serde(default)]
-    #[cfg(feature = "hack")]
-    hack: RawCfgHack,
 }
 
 // =============================================================================
@@ -671,12 +662,6 @@ pub struct CfgBehavior {
     // pub prompt_on_exit: bool,
 }
 
-#[cfg(feature = "hack")]
-#[derive(Debug)]
-pub struct CfgHack {
-    pub toggle: Vec<String>,
-}
-
 #[derive(Debug)]
 pub struct ZohaCfg {
     pub font: CfgFont,
@@ -686,8 +671,6 @@ pub struct ZohaCfg {
     pub keys: CfgKey,
     pub terminal: CfgTerminal,
     pub behavior: CfgBehavior,
-    #[cfg(feature = "hack")]
-    pub hack: CfgHack,
 }
 
 // =============================================================================
@@ -719,7 +702,6 @@ mod defaults {
     pub(super) const TAB_NUM_CHARS: i8 = 25;
     // pub(super) const PROMPT_ON_EXIT: bool = false;
     pub(super) const TAB_SCROLL_WRAP: bool = true;
-    pub(super) const TOGGLE_KEYCODE: &str = "F1";
     pub(super) const HIDE_ON_FOCUS_LOSS: bool = false;
 
     pub(super) const ACTION_TAB_ADD: &str = "<Ctrl><Shift>t";
@@ -744,10 +726,6 @@ mod defaults {
     pub(super) const ACTION_FONT_SIZE_INC: &str = "<Ctrl><Alt>equal";
     pub(super) const ACTION_FONT_SIZE_DEC: &str = "<Ctrl><Alt>minus";
     pub(super) const ACTION_FONT_SIZE_RESET: &str = "<Ctrl><Alt>0";
-
-    pub(super) fn default_key_codes() -> Vec<String> {
-        return TOGGLE_KEYCODE.split('+').map(|it| it.to_string()).collect();
-    }
 }
 
 fn try_parse_color(
@@ -1073,10 +1051,6 @@ impl ZohaCfg {
                         // prompt_on_exit: raw.behavior.prompt_on_exit
                         //     .unwrap_or(PROMPT_ON_EXIT),
                     },
-                    #[cfg(feature = "hack")]
-                    hack: CfgHack {
-                        toggle: raw.hack.toggle.unwrap_or_else(default_key_codes),
-                    },
                 }
             }
             Err(e) => {
@@ -1184,10 +1158,6 @@ impl Default for ZohaCfg {
                 last_tab_exit_behavior: LastTabExitBehavior::RestartTerminal,
                 hide_on_focus_loss: HIDE_ON_FOCUS_LOSS,
                 // prompt_on_exit: PROMPT_ON_EXIT,
-            },
-            #[cfg(feature = "hack")]
-            hack: CfgHack {
-                toggle: default_key_codes(),
             },
         }
     }
@@ -1334,18 +1304,4 @@ fn shell(user_cmd: Option<String>) -> String {
     }
 
     panic!("Could not locate any shell");
-}
-
-// =============================================================================
-
-#[cfg(test)]
-mod tests {
-    use crate::config::cfg::{RawCfg, ZohaCfg};
-
-    #[test]
-    fn test_cfg_deser() {
-        let raw_cfg = toml::from_str::<RawCfg>("").unwrap();
-        let cfg: ZohaCfg = raw_cfg.try_into().unwrap();
-        println!("{:?}", cfg);
-    }
 }

@@ -7,27 +7,26 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::string::ToString;
 
+use crate::config::cfg::ScrollbarPosition;
+use crate::config::cfg::TerminalExitBehavior;
+use crate::ui::window::remove_page_by_hbox;
+use crate::app::context::ZohaCtx;
 use gdk::gio;
 use gdk::glib::ObjectExt;
 use gdk::RGBA;
 use glib::Pid;
 use glib::SignalHandlerId;
 use glib::SpawnFlags;
-use gtk::Orientation;
 use gtk::prelude::BoxExt;
 use gtk::prelude::ScrollableExt;
 use gtk::prelude::WidgetExt;
+use gtk::Orientation;
 use gtk::Scrollbar;
 use log::debug;
+use zoha_vte::traits::TerminalExt;
 use zoha_vte::Format;
 use zoha_vte::PtyFlags;
 use zoha_vte::Terminal;
-use zoha_vte::traits::TerminalExt;
-
-use crate::config::cfg::ScrollbarPosition;
-use crate::config::cfg::TerminalExitBehavior;
-use crate::ui::window::remove_page_by_hbox;
-use crate::ZohaCtx;
 
 struct ZohaTerminalCtx {
     ctx: Rc<RefCell<ZohaCtx>>,
@@ -36,7 +35,6 @@ struct ZohaTerminalCtx {
     hbox: gtk::Box,
     exit_handler: Option<SignalHandlerId>,
 }
-
 
 #[derive(Clone)]
 pub struct ZohaTerminal {
@@ -49,13 +47,16 @@ pub struct ZohaTerminal {
 
 impl Debug for ZohaTerminal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ZohaTerminal[pid={:?}]",
-               self.ctx
-                   .try_borrow()
-                   .map(|it|
-                       it.pid.map(|pid| format!("{:?}", pid)).unwrap_or_else(|| "?".to_string())
-                   )
-                   .unwrap_or_else(|_| "?".to_string())
+        write!(
+            f,
+            "ZohaTerminal[pid={:?}]",
+            self.ctx
+                .try_borrow()
+                .map(|it| it
+                    .pid
+                    .map(|pid| format!("{:?}", pid))
+                    .unwrap_or_else(|| "?".to_string()))
+                .unwrap_or_else(|_| "?".to_string())
         )
     }
 }
@@ -96,10 +97,7 @@ impl ZohaTerminal {
             vte
         };
 
-        let scrollbar = Scrollbar::new(
-            Orientation::Vertical,
-            vte.vadjustment().as_ref(),
-        );
+        let scrollbar = Scrollbar::new(Orientation::Vertical, vte.vadjustment().as_ref());
         scrollbar.set_no_show_all(true);
 
         let hbox = gtk::Box::new(Orientation::Horizontal, 0);
@@ -167,12 +165,15 @@ impl ZohaTerminal {
     }
 
     pub fn kill(&mut self) {
-        debug!("killing terminal: {}",
-            self
-            .ctx
-            .try_borrow()
-            .map(|it| it.pid.map(|it| it.0.to_string()).unwrap_or_else(|| "?".to_string()))
-            .unwrap_or_else(|_| "?".to_string())
+        debug!(
+            "killing terminal: {}",
+            self.ctx
+                .try_borrow()
+                .map(|it| it
+                    .pid
+                    .map(|it| it.0.to_string())
+                    .unwrap_or_else(|| "?".to_string()))
+                .unwrap_or_else(|_| "?".to_string())
         );
 
         // Can not happen in close_terminal as ctx is already borrowed there from some other
@@ -186,28 +187,27 @@ impl ZohaTerminal {
     }
 
     #[allow(deprecated)]
-    pub fn spawn(&self,
-                 working_dir: Option<PathBuf>) -> eyre::Result<()> {
-        let dir: Option<String> = working_dir.or_else(||
-            self.ctx
-                .borrow()
-                .ctx
-                .borrow()
-                .cfg
-                .process
-                .working_dir
-                .as_ref()
-                .map(PathBuf::from)
-        ).map(|it| it.into_os_string().to_string_lossy().into_owned());
+    pub fn spawn(&self, working_dir: Option<PathBuf>) -> eyre::Result<()> {
+        let dir: Option<String> = working_dir
+            .or_else(|| {
+                self.ctx
+                    .borrow()
+                    .ctx
+                    .borrow()
+                    .cfg
+                    .process
+                    .working_dir
+                    .as_ref()
+                    .map(PathBuf::from)
+            })
+            .map(|it| it.into_os_string().to_string_lossy().into_owned());
 
         let shell: String = self.ctx.borrow().ctx.borrow().cfg.process.command.clone();
 
         let pid = self.vte.spawn_sync(
             PtyFlags::DEFAULT,
             dir.as_deref(),
-            &[
-                Path::new(&shell),
-            ],
+            &[Path::new(&shell)],
             &[],
             SpawnFlags::DEFAULT,
             Some(&mut || {}),

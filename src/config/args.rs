@@ -7,16 +7,6 @@ pub struct ZohaArgs {
     #[arg(short, long)]
     pub cfg_file: Option<String>,
 
-    /// Disable listening on dbus for keypress.
-    #[arg(short, long, default_value_t = false)]
-    #[cfg(feature = "hack")]
-    pub keypress_grabber: bool,
-
-    /// List keys accepted by keypress grabber.
-    #[arg(long, default_value_t = false)]
-    #[cfg(feature = "hack")]
-    pub list_key_grabber_keys: bool,
-
     /// Signal Zoha to toggle visibility and exit.
     #[arg(short, long, default_value_t = false)]
     pub signal: bool,

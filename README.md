@@ -37,16 +37,6 @@ zoha -s
 
 Assign this command to a keyboard shortcut through your window manager, and you're all set!
 
-### Hack to Use Zoha Without DBus
-
-Zoha also comes with a hack, that listens to key presses of the keyboard and toggles visibility
-if the configured shortcuts are pressed. This is a hack though, and more info can be found by
-launching zoha with the hack:
-
-```bash
-zoha -k
-```
-
 # Installing
 
 Generate and launch the binary by following commands, you need to have Rust installed:
@@ -213,22 +203,6 @@ bg = "rgba(0,0,0,0.8)"
 |------------------------|-----------------|------|------------------------------------------------------------------------------------------------------------------|
 | terminal_exit_behavior | ExitTerminal    | enum | What happens when a VTE terminal exits; possible values: ExitTerminal; TODO: RestartCommand, DropToDefaultShell. |
 | last_tab_exit_behavior | RestartTerminal | enum | What happens when last tab exits or is closed; possible values: RestartTerminal, RestartTerminalAndHide, Exit.   |
-
-### [hack]
-
-| Config | Default | Type                       | Notes                                                                                |
-|--------|---------|----------------------------|--------------------------------------------------------------------------------------|
-| toggle | F1      | string list (of key-codes) | Key-code sequence to toggle visibility. Zoha must run with `-k` flag to take effect. |
-
-Note: Run Zoha with `--list-key-grabber-keys` to print a list of keys accepted by the toggle config above.
-Please note: the key sequence specification **IS DIFFERENT** from shortcut specification above.
-The shortcuts take GTK accelerator specification, but `toggle` takes Rust's device_query crate
-specific keys.
-
-Example value for `toggle`:
-```toml
-toggle = ["LControl", "LShift", "F1"]
-```
 
 # TODO
 
