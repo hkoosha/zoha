@@ -1,6 +1,6 @@
-use std::fmt::{Display, Formatter};
 use gdk::RGBA;
 use serde::Deserialize;
+use std::fmt::{Display, Formatter};
 
 fn f(value: i32) -> f64 {
     return (value as f64) / (0xffff as f64);

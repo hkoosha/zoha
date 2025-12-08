@@ -13,7 +13,7 @@ clippy:
   cargo clippy -- -A clippy::needless_return
 
 run: c
-  cargo run
+  cargo run -r
 
 build: c
   cargo build -r
@@ -38,3 +38,5 @@ rk: build
 r: build
   cargo run -r
 
+fmt:
+  cargo fmt

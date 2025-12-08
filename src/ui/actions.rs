@@ -2,16 +2,17 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use gdk::gio::Action;
-use gtk::glib::clone;
 use gtk::Application;
 use gtk::ApplicationWindow;
 use gtk::gio::SimpleAction;
+use gtk::glib::clone;
 use gtk::prelude::ActionMapExt;
 use gtk::prelude::ApplicationWindowExt;
 use gtk::prelude::GtkApplicationExt;
 use gtk::prelude::GtkWindowExt;
 use log::debug;
 
+use crate::app::context::ZohaCtx;
 use crate::ui::window::add_tab;
 use crate::ui::window::close_tab;
 use crate::ui::window::copy;
@@ -26,7 +27,6 @@ use crate::ui::window::move_backward;
 use crate::ui::window::move_forward;
 use crate::ui::window::paste;
 use crate::ui::window::toggle_transparency;
-use crate::app::context::ZohaCtx;
 
 const ACTION__WIN__QUIT: &str = "quit";
 const ACTION__ZOHA__TAB_ADD: &str = "zoha.tab_add";
@@ -51,27 +51,18 @@ const ACTION__ZOHA__FONT_INC: &str = "zoha.font_inc";
 const ACTION__ZOHA__FONT_DEC: &str = "zoha.font_dec";
 const ACTION__ZOHA__FONT_RESET: &str = "zoha.font_reset";
 
-pub fn set_app_actions(ctx: &ZohaCtx,
-                       application: &Application) {
+pub fn set_app_actions(ctx: &ZohaCtx, application: &Application) {
     if let Some(quit) = &ctx.cfg.keys.quit {
-        application.set_accels_for_action(
-            &format!("win.{}", ACTION__WIN__QUIT),
-            &[quit],
-        );
+        application.set_accels_for_action(&format!("win.{}", ACTION__WIN__QUIT), &[quit]);
     }
 
     if let Some(tab_add) = &ctx.cfg.keys.tab_add {
-        application.set_accels_for_action(
-            &format!("win.{}", ACTION__ZOHA__TAB_ADD),
-            &[tab_add],
-        );
+        application.set_accels_for_action(&format!("win.{}", ACTION__ZOHA__TAB_ADD), &[tab_add]);
     }
 
     if let Some(tab_close) = &ctx.cfg.keys.tab_close {
-        application.set_accels_for_action(
-            &format!("win.{}", ACTION__ZOHA__TAB_CLOSE),
-            &[tab_close],
-        );
+        application
+            .set_accels_for_action(&format!("win.{}", ACTION__ZOHA__TAB_CLOSE), &[tab_close]);
     }
 
     if let Some(tab_move_fwd) = &ctx.cfg.keys.tab_move_forward {
@@ -168,17 +159,11 @@ pub fn set_app_actions(ctx: &ZohaCtx,
     // ---------------------------------
 
     if let Some(copy) = &ctx.cfg.keys.copy {
-        application.set_accels_for_action(
-            &format!("win.{}", ACTION__ZOHA__COPY),
-            &[copy],
-        );
+        application.set_accels_for_action(&format!("win.{}", ACTION__ZOHA__COPY), &[copy]);
     }
 
     if let Some(paste) = &ctx.cfg.keys.paste {
-        application.set_accels_for_action(
-            &format!("win.{}", ACTION__ZOHA__PASTE),
-            &[paste],
-        );
+        application.set_accels_for_action(&format!("win.{}", ACTION__ZOHA__PASTE), &[paste]);
     }
 
     // ---------------------------------
@@ -193,24 +178,16 @@ pub fn set_app_actions(ctx: &ZohaCtx,
     // ---------------------------------
 
     if let Some(font_inc) = &ctx.cfg.keys.font_size_inc {
-        application.set_accels_for_action(
-            &format!("win.{}", ACTION__ZOHA__FONT_INC),
-            &[font_inc],
-        );
+        application.set_accels_for_action(&format!("win.{}", ACTION__ZOHA__FONT_INC), &[font_inc]);
     }
 
     if let Some(font_dec) = &ctx.cfg.keys.font_size_dec {
-        application.set_accels_for_action(
-            &format!("win.{}", ACTION__ZOHA__FONT_DEC),
-            &[font_dec],
-        );
+        application.set_accels_for_action(&format!("win.{}", ACTION__ZOHA__FONT_DEC), &[font_dec]);
     }
 
     if let Some(font_reset) = &ctx.cfg.keys.font_size_reset {
-        application.set_accels_for_action(
-            &format!("win.{}", ACTION__ZOHA__FONT_RESET),
-            &[font_reset],
-        );
+        application
+            .set_accels_for_action(&format!("win.{}", ACTION__ZOHA__FONT_RESET), &[font_reset]);
     }
 }
 
@@ -460,8 +437,7 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
     // ---------------------------------
 
     if let Some(key) = cxb.cfg.keys.transparency_toggle.as_ref() {
-        let sa =
-            SimpleAction::new(ACTION__ZOHA__TRANSPARENCY_TOGGLE, None);
+        let sa = SimpleAction::new(ACTION__ZOHA__TRANSPARENCY_TOGGLE, None);
         let ctx = Rc::clone(ctx);
         sa.connect_activate(move |_, _| {
             toggle_transparency(&ctx);

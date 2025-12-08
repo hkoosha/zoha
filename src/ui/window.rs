@@ -1,30 +1,29 @@
+use crate::app::context::ZohaCtx;
+use crate::app::signal;
+use crate::config::cfg::LastTabExitBehavior;
+use crate::config::cfg::TabMode;
+use crate::config::cfg::ZohaCfg;
+use crate::config::style;
+use crate::ui::terminal::ZohaTerminal;
 use gdk::glib::Cast;
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::rc::Rc;
-
-use gtk::builders::ApplicationBuilder;
-use gtk::builders::ApplicationWindowBuilder;
-use gtk::prelude::ContainerExt;
-use gtk::prelude::ContainerExtManual;
-use gtk::prelude::GtkWindowExt;
-use gtk::prelude::NotebookExt;
-use gtk::prelude::NotebookExtManual;
-use gtk::prelude::WidgetExt;
 use gtk::Application;
 use gtk::ApplicationWindow;
 use gtk::Label;
 use gtk::Notebook;
 use gtk::Widget;
+use gtk::builders::ApplicationBuilder;
+use gtk::builders::ApplicationWindowBuilder;
+use gtk::prelude::ContainerExtManual;
+use gtk::prelude::GtkWindowExt;
+use gtk::prelude::NotebookExt;
+use gtk::prelude::NotebookExtManual;
+use gtk::prelude::WidgetExt;
+use gtk::prelude::{ContainerExt, StyleContextExt};
 use log::debug;
 use log::trace;
-
-use crate::config::cfg::LastTabExitBehavior;
-use crate::config::cfg::TabMode;
-use crate::config::cfg::ZohaCfg;
-use crate::app::context::ZohaCtx;
-use crate::app::signal;
-use crate::ui::terminal::ZohaTerminal;
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::rc::Rc;
 
 pub const APPLICATION_ID: &str = "io.koosha.zoha";
 
@@ -33,6 +32,19 @@ pub fn create_application() -> ApplicationBuilder {
     let application: ApplicationBuilder = Application::builder().application_id(APPLICATION_ID);
 
     return application;
+}
+
+pub fn init_screen(css: &Option<String>) {
+    match css {
+        None => debug!("no css provided, skipping css styling on screen"),
+        Some(css) => match gdk::Screen::default() {
+            None => eprintln!("could not get screen, will skip setting style"),
+            Some(screen) => match style::set_css(&screen, css) {
+                Ok(_) => {}
+                Err(err) => eprintln!("failed to set css: {}", err),
+            },
+        },
+    }
 }
 
 pub fn create_window(cfg: &ZohaCfg, app: &Application) -> ApplicationWindowBuilder {
@@ -110,6 +122,7 @@ pub fn create_notebook(ctx: &mut ZohaCtx) {
     trace!("create notebook");
 
     let notebook = Notebook::new();
+    notebook.style_context().add_class("notebook");
 
     ctx.set_notebook(notebook);
 

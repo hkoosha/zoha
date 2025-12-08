@@ -7,26 +7,26 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::string::ToString;
 
+use crate::app::context::ZohaCtx;
 use crate::config::cfg::ScrollbarPosition;
 use crate::config::cfg::TerminalExitBehavior;
 use crate::ui::window::remove_page_by_hbox;
-use crate::app::context::ZohaCtx;
+use gdk::RGBA;
 use gdk::gio;
 use gdk::glib::ObjectExt;
-use gdk::RGBA;
 use glib::Pid;
 use glib::SignalHandlerId;
 use glib::SpawnFlags;
+use gtk::Orientation;
+use gtk::Scrollbar;
 use gtk::prelude::BoxExt;
 use gtk::prelude::ScrollableExt;
 use gtk::prelude::WidgetExt;
-use gtk::Orientation;
-use gtk::Scrollbar;
 use log::debug;
-use zoha_vte::traits::TerminalExt;
 use zoha_vte::Format;
 use zoha_vte::PtyFlags;
 use zoha_vte::Terminal;
+use zoha_vte::traits::TerminalExt;
 
 struct ZohaTerminalCtx {
     ctx: Rc<RefCell<ZohaCtx>>,

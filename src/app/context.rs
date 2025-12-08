@@ -46,6 +46,12 @@ impl Debug for ZohaCtx {
 impl ZohaCtx {
     pub fn new(cfg: Rc<ZohaCfg>) -> Self {
         let fullscreen = cfg.display.fullscreen;
+
+        let x = i32::try_from(cfg.display.x_pos).expect("x_pos overflow")
+            + i32::try_from(cfg.display.margin_left).expect("margin_left overflow");
+        let y = i32::try_from(cfg.display.y_pos).expect("y_pos overflow")
+            + i32::try_from(cfg.display.margin_top).expect("margin_top overflow");
+
         return Self {
             cfg,
             font_scale: 1.0,
@@ -56,9 +62,9 @@ impl ZohaCtx {
             last_toggle: SystemTime::now().sub(Duration::from_secs(3600)),
             window: None,
             notebook: None,
-            x: 0,
-            y: 0,
             tab_counter: Rc::new(RefCell::new(TabCounter(1))),
+            x,
+            y,
         };
     }
 

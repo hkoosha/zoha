@@ -14,8 +14,8 @@ use gdk::Monitor;
 use gdk::prelude::MonitorExt;
 #[allow(unused_imports)] // IntelliJ goes bananas without this.
 use glib::bitflags::Flags;
-use gtk::accelerator_parse;
 use gtk::PositionType;
+use gtk::accelerator_parse;
 use gtk::gdk::RGBA;
 use pango::FontDescription;
 use serde::Deserialize;
@@ -43,7 +43,6 @@ impl Display for TabMode {
         }
     }
 }
-
 
 #[derive(Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TabPosition {
@@ -74,7 +73,6 @@ impl TabPosition {
         }
     }
 }
-
 
 #[derive(Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum CursorShape {
@@ -136,7 +134,6 @@ impl EraseBinding {
     }
 }
 
-
 #[derive(Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ScrollbarPosition {
     Left,
@@ -161,7 +158,6 @@ pub enum TerminalExitBehavior {
 
     // TODO: implement:
     // RestartCommand,
-
     ExitTerminal,
 }
 
@@ -250,6 +246,10 @@ struct RawCfgDisplay {
     tab_expand: Option<bool>,
     tab_title_num_characters: Option<i8>,
     scrollbar_position: Option<ScrollbarPosition>,
+    margin_left: Option<u32>,
+    margin_right: Option<u32>,
+    margin_top: Option<u32>,
+    margin_bottom: Option<u32>,
 }
 
 #[derive(Deserialize, Debug, Default)]
@@ -304,6 +304,11 @@ struct RawCfgBehavior {
 }
 
 #[derive(Deserialize, Debug, Default)]
+struct RawCfgStyle {
+    css: Option<String>,
+}
+
+#[derive(Deserialize, Debug, Default)]
 struct RawCfg {
     #[serde(default)]
     font: RawCfgFont,
@@ -319,6 +324,8 @@ struct RawCfg {
     terminal: RawCfgTerminal,
     #[serde(default)]
     behavior: RawCfgBehavior,
+    #[serde(default)]
+    style: RawCfgStyle,
 }
 
 // =============================================================================
@@ -504,6 +511,10 @@ pub struct CfgDisplay {
     pub tab_expand: bool,
     pub tab_title_num_characters: Option<i8>,
     pub scrollbar_position: ScrollbarPosition,
+    pub margin_left: u32,
+    pub margin_right: u32,
+    pub margin_top: u32,
+    pub margin_bottom: u32,
 }
 
 impl CfgDisplay {
@@ -530,8 +541,11 @@ impl CfgDisplay {
                 match cfg_model.parse::<u8>() {
                     Ok(index) => {
                         return display.monitor(index as i32).unwrap_or_else(|| {
-                            eprintln!("using primary monitor, \
-                                           configured monitor not found: {}", index);
+                            eprintln!(
+                                "using primary monitor, \
+                                           configured monitor not found: {}",
+                                index
+                            );
                             display
                                 .primary_monitor()
                                 .expect("could not get primary monitor")
@@ -550,9 +564,14 @@ impl CfgDisplay {
                     }
                 }
 
-                eprintln!("using primary monitor, \
-                           configured monitor not found: {}", index_or_model);
-                display.primary_monitor().expect("could not get primary monitor")
+                eprintln!(
+                    "using primary monitor, \
+                           configured monitor not found: {}",
+                    index_or_model
+                );
+                display
+                    .primary_monitor()
+                    .expect("could not get primary monitor")
             }
         };
     }
@@ -561,42 +580,50 @@ impl CfgDisplay {
         let monitor: Monitor = self.get_monitor();
         let monitor_width: u32 = monitor.workarea().width().clamp(1, i32::MAX) as u32;
 
-        return
-            if let Some(percentage) = self.width_percentage {
-                let percentage: u32 = percentage as u32;
-                if percentage > 100 {
-                    eprintln!("invalid width percentage: {}", percentage);
-                    monitor_width
-                } else {
-                    percentage / 100 * monitor_width
-                }
-            } else if let Some(absolute) = self.width {
-                min(absolute, monitor_width)
-            } else {
+        let mut w = if let Some(percentage) = self.width_percentage {
+            let percentage: u32 = percentage as u32;
+            if percentage > 100 {
+                eprintln!("invalid width percentage: {}", percentage);
                 monitor_width
+            } else {
+                percentage / 100 * monitor_width
             }
-        ;
+        } else if let Some(absolute) = self.width {
+            min(absolute, monitor_width)
+        } else {
+            monitor_width
+        };
+
+        if w > self.margin_right + 1 {
+            w -= self.margin_right;
+        }
+
+        return w;
     }
 
     pub fn get_height(&self) -> u32 {
         let monitor: Monitor = self.get_monitor();
         let monitor_height: u32 = monitor.workarea().height().clamp(1, i32::MAX) as u32;
 
-        return
-            if let Some(percentage) = self.height_percentage {
-                let percentage: u32 = percentage as u32;
-                if percentage > 100 {
-                    eprintln!("invalid height percentage: {}", percentage);
-                    monitor_height
-                } else {
-                    percentage / 100 * monitor_height
-                }
-            } else if let Some(absolute) = self.height {
-                min(absolute, monitor_height)
-            } else {
+        let mut h = if let Some(percentage) = self.height_percentage {
+            let percentage: u32 = percentage as u32;
+            if percentage > 100 {
+                eprintln!("invalid height percentage: {}", percentage);
                 monitor_height
+            } else {
+                percentage / 100 * monitor_height
             }
-        ;
+        } else if let Some(absolute) = self.height {
+            min(absolute, monitor_height)
+        } else {
+            monitor_height
+        };
+
+        if h > self.margin_bottom + 1 {
+            h -= self.margin_bottom;
+        }
+
+        return h;
     }
 }
 
@@ -649,7 +676,7 @@ impl CfgTerminal {
     pub fn cursor_blink_to_vte(&self) -> CursorBlinkMode {
         return match self.cursor_blink {
             true => CursorBlinkMode::On,
-            false => CursorBlinkMode::Off
+            false => CursorBlinkMode::Off,
         };
     }
 }
@@ -663,6 +690,11 @@ pub struct CfgBehavior {
 }
 
 #[derive(Debug)]
+pub struct CfgStyle {
+    pub css: Option<String>,
+}
+
+#[derive(Debug)]
 pub struct ZohaCfg {
     pub font: CfgFont,
     pub display: CfgDisplay,
@@ -671,12 +703,14 @@ pub struct ZohaCfg {
     pub keys: CfgKey,
     pub terminal: CfgTerminal,
     pub behavior: CfgBehavior,
+    pub style: CfgStyle,
 }
 
 // =============================================================================
 
 mod defaults {
-    pub(super) const CONFIG_FILE_NAME: &str = ".zoha.toml";
+    pub(super) const CONFIG_FILE_PATH: &str = ".config/zoha/zoha.toml";
+    pub(super) const CONFIG_FILE_PATH_LEGACY: &str = ".zoha.toml";
     pub(super) const FONT: &str = "Monospace Regular";
     pub(super) const FONT_SIZE: u8 = 16u8;
     pub(super) const X: u32 = 0;
@@ -728,10 +762,7 @@ mod defaults {
     pub(super) const ACTION_FONT_SIZE_RESET: &str = "<Ctrl><Alt>0";
 }
 
-fn try_parse_color(
-    name: &str,
-    color_spec: Option<String>,
-) -> Option<RGBA> {
+fn try_parse_color(name: &str, color_spec: Option<String>) -> Option<RGBA> {
     color_spec.as_ref()?;
 
     let color_spec: String = color_spec.unwrap();
@@ -758,9 +789,7 @@ fn try_parse_color(
         }
     } else {
         match RGBA::parse(&color_spec) {
-            Ok(color) => {
-                Some(color)
-            }
+            Ok(color) => Some(color),
             Err(_) => {
                 eprintln!("invalid {}: {}", name, color_spec);
                 None
@@ -769,11 +798,7 @@ fn try_parse_color(
     };
 }
 
-fn try_parse_color_or_default(
-    name: &str,
-    color_spec: Option<String>,
-    default: &str,
-) -> RGBA {
+fn try_parse_color_or_default(name: &str, color_spec: Option<String>, default: &str) -> RGBA {
     return try_parse_color(name, color_spec).unwrap_or_else(|| {
         RGBA::parse(default).unwrap_or_else(|_| panic!("invalid default color for: {}", name))
     });
@@ -797,6 +822,10 @@ impl ZohaCfg {
                     },
                     display: CfgDisplay {
                         monitor: raw.display.monitor,
+                        margin_left: raw.display.margin_left.unwrap_or(0),
+                        margin_right: raw.display.margin_right.unwrap_or(0),
+                        margin_top: raw.display.margin_top.unwrap_or(0),
+                        margin_bottom: raw.display.margin_bottom.unwrap_or(0),
                         x_pos: raw.display.x_pos.unwrap_or(X),
                         y_pos: raw.display.y_pos.unwrap_or(Y),
                         width: raw.display.width,
@@ -814,128 +843,56 @@ impl ZohaCfg {
                         tab_position: raw.display.tab_position.unwrap_or(TabPosition::Top),
                         tab_expand: raw.display.tab_expand.unwrap_or(TAB_EXPAND),
                         tab_title_num_characters: raw.display.tab_title_num_characters,
-                        scrollbar_position: raw.display.scrollbar_position
+                        scrollbar_position: raw
+                            .display
+                            .scrollbar_position
                             .unwrap_or(ScrollbarPosition::Hidden),
                     },
                     color: CfgColor {
-                        bg: try_parse_color_or_default(
-                            "bg_color",
-                            raw.color.bg,
-                            BG_COLOR,
-                        ),
-                        fg: try_parse_color_or_default(
-                            "fg_color",
-                            raw.color.fg,
-                            FG_COLOR,
-                        ),
+                        bg: try_parse_color_or_default("bg_color", raw.color.bg, BG_COLOR),
+                        fg: try_parse_color_or_default("fg_color", raw.color.fg, FG_COLOR),
                         cursor: try_parse_color_or_default(
                             "cursor_color",
                             raw.color.cursor,
                             CURSOR_COLOR,
                         ),
                         pallet: raw.color.pallet.unwrap_or(Pallet::Tango),
-                        color_00: try_parse_color(
-                            "color_00",
-                            raw.color.color_00,
-                        ),
-                        color_01: try_parse_color(
-                            "color_01",
-                            raw.color.color_01,
-                        ),
-                        color_02: try_parse_color(
-                            "color_02",
-                            raw.color.color_02,
-                        ),
-                        color_03: try_parse_color(
-                            "color_03",
-                            raw.color.color_03,
-                        ),
-                        color_04: try_parse_color(
-                            "color_04",
-                            raw.color.color_04,
-                        ),
-                        color_05: try_parse_color(
-                            "color_05",
-                            raw.color.color_05,
-                        ),
-                        color_06: try_parse_color(
-                            "color_06",
-                            raw.color.color_06,
-                        ),
-                        color_07: try_parse_color(
-                            "color_07",
-                            raw.color.color_07,
-                        ),
-                        color_08: try_parse_color(
-                            "color_08",
-                            raw.color.color_08,
-                        ),
-                        color_09: try_parse_color(
-                            "color_09",
-                            raw.color.color_09,
-                        ),
-                        color_10: try_parse_color(
-                            "color_10",
-                            raw.color.color_10,
-                        ),
-                        color_11: try_parse_color(
-                            "color_11",
-                            raw.color.color_11,
-                        ),
-                        color_12: try_parse_color(
-                            "color_12",
-                            raw.color.color_12,
-                        ),
-                        color_13: try_parse_color(
-                            "color_13",
-                            raw.color.color_13,
-                        ),
-                        color_14: try_parse_color(
-                            "color_14",
-                            raw.color.color_14,
-                        ),
-                        color_15: try_parse_color(
-                            "color_15",
-                            raw.color.color_15,
-                        ),
+                        color_00: try_parse_color("color_00", raw.color.color_00),
+                        color_01: try_parse_color("color_01", raw.color.color_01),
+                        color_02: try_parse_color("color_02", raw.color.color_02),
+                        color_03: try_parse_color("color_03", raw.color.color_03),
+                        color_04: try_parse_color("color_04", raw.color.color_04),
+                        color_05: try_parse_color("color_05", raw.color.color_05),
+                        color_06: try_parse_color("color_06", raw.color.color_06),
+                        color_07: try_parse_color("color_07", raw.color.color_07),
+                        color_08: try_parse_color("color_08", raw.color.color_08),
+                        color_09: try_parse_color("color_09", raw.color.color_09),
+                        color_10: try_parse_color("color_10", raw.color.color_10),
+                        color_11: try_parse_color("color_11", raw.color.color_11),
+                        color_12: try_parse_color("color_12", raw.color.color_12),
+                        color_13: try_parse_color("color_13", raw.color.color_13),
+                        color_14: try_parse_color("color_14", raw.color.color_14),
+                        color_15: try_parse_color("color_15", raw.color.color_15),
                     },
                     process: CfgProcess {
-                        command: raw.process.command
+                        command: raw
+                            .process
+                            .command
                             .map(|it| shell(Some(it)))
                             .unwrap_or_else(|| shell(None)),
                         working_dir: raw.process.working_dir,
                     },
                     keys: CfgKey {
-                        copy: sanitize_key(
-                            raw.keys.copy,
-                            ACTION_COPY,
-                            &mut seen,
-                        ),
-                        paste: sanitize_key(
-                            raw.keys.paste,
-                            ACTION_PASTE,
-                            &mut seen,
-                        ),
-                        quit: sanitize_key(
-                            raw.keys.quit,
-                            ACTION_QUIT,
-                            &mut seen,
-                        ),
+                        copy: sanitize_key(raw.keys.copy, ACTION_COPY, &mut seen),
+                        paste: sanitize_key(raw.keys.paste, ACTION_PASTE, &mut seen),
+                        quit: sanitize_key(raw.keys.quit, ACTION_QUIT, &mut seen),
                         transparency_toggle: sanitize_key(
                             raw.keys.transparency_toggle,
                             ACTION_TRANSPARENCY_TOGGLE,
                             &mut seen,
                         ),
-                        tab_add: sanitize_key(
-                            raw.keys.tab_add,
-                            ACTION_TAB_ADD,
-                            &mut seen,
-                        ),
-                        tab_close: sanitize_key(
-                            raw.keys.tab_close,
-                            ACTION_TAB_CLOSE,
-                            &mut seen,
-                        ),
+                        tab_add: sanitize_key(raw.keys.tab_add, ACTION_TAB_ADD, &mut seen),
+                        tab_close: sanitize_key(raw.keys.tab_close, ACTION_TAB_CLOSE, &mut seen),
                         tab_move_backward: sanitize_key(
                             raw.keys.tab_move_backward,
                             ACTION_TAB_MOVE_BACKWARD,
@@ -1018,39 +975,44 @@ impl ZohaCfg {
                         ),
                     },
                     terminal: CfgTerminal {
-                        allow_hyper_link: raw.terminal.allow_hyper_link
-                            .unwrap_or(ALLOW_HYPERLINK),
-                        audible_bell: raw.terminal.audible_bell
-                            .unwrap_or(AUDIBLE_BELL),
-                        cursor_blink: raw.terminal.cursor_blink
-                            .unwrap_or(CURSOR_BLINK),
-                        cursor_shape: raw.terminal.cursor_shape
-                            .unwrap_or(CursorShape::Block),
-                        scroll_on_output: raw.terminal.scroll_on_output
-                            .unwrap_or(SCROLL_ON_OUTPUT),
-                        scroll_on_keystroke: raw.terminal.scroll_on_keystroke
+                        allow_hyper_link: raw.terminal.allow_hyper_link.unwrap_or(ALLOW_HYPERLINK),
+                        audible_bell: raw.terminal.audible_bell.unwrap_or(AUDIBLE_BELL),
+                        cursor_blink: raw.terminal.cursor_blink.unwrap_or(CURSOR_BLINK),
+                        cursor_shape: raw.terminal.cursor_shape.unwrap_or(CursorShape::Block),
+                        scroll_on_output: raw.terminal.scroll_on_output.unwrap_or(SCROLL_ON_OUTPUT),
+                        scroll_on_keystroke: raw
+                            .terminal
+                            .scroll_on_keystroke
                             .unwrap_or(SCROLL_ON_KEYSTROKE),
-                        mouse_auto_hide: raw.terminal.mouse_auto_hide
-                            .unwrap_or(MOUSE_AUTO_HIDE),
-                        scrollback_lines: raw.terminal.scrollback_lines
-                            .unwrap_or(SCROLLBACK_LINES),
-                        backspace_binding: raw.terminal.backspace_binding
+                        mouse_auto_hide: raw.terminal.mouse_auto_hide.unwrap_or(MOUSE_AUTO_HIDE),
+                        scrollback_lines: raw.terminal.scrollback_lines.unwrap_or(SCROLLBACK_LINES),
+                        backspace_binding: raw
+                            .terminal
+                            .backspace_binding
                             .unwrap_or(EraseBinding::Auto),
-                        delete_binding: raw.terminal.delete_binding
-                            .unwrap_or(EraseBinding::Auto),
-                        word_char_exceptions: raw.terminal.word_char_exceptions
+                        delete_binding: raw.terminal.delete_binding.unwrap_or(EraseBinding::Auto),
+                        word_char_exceptions: raw
+                            .terminal
+                            .word_char_exceptions
                             .unwrap_or_else(|| WORD_CHARS.to_string()),
                     },
                     behavior: CfgBehavior {
-                        terminal_exit_behavior: raw.behavior.terminal_exit_behavior
+                        terminal_exit_behavior: raw
+                            .behavior
+                            .terminal_exit_behavior
                             .unwrap_or(TerminalExitBehavior::ExitTerminal),
-                        last_tab_exit_behavior: raw.behavior.last_tab_exit_behavior
+                        last_tab_exit_behavior: raw
+                            .behavior
+                            .last_tab_exit_behavior
                             .unwrap_or(LastTabExitBehavior::RestartTerminal),
-                        hide_on_focus_loss: raw.behavior.hide_on_focus_loss
+                        hide_on_focus_loss: raw
+                            .behavior
+                            .hide_on_focus_loss
                             .unwrap_or(HIDE_ON_FOCUS_LOSS),
                         // prompt_on_exit: raw.behavior.prompt_on_exit
                         //     .unwrap_or(PROMPT_ON_EXIT),
                     },
+                    style: CfgStyle { css: raw.style.css },
                 }
             }
             Err(e) => {
@@ -1071,6 +1033,10 @@ impl Default for ZohaCfg {
             },
             display: CfgDisplay {
                 monitor: None,
+                margin_top: 0,
+                margin_left: 0,
+                margin_right: 0,
+                margin_bottom: 0,
                 x_pos: X,
                 y_pos: Y,
                 width: None,
@@ -1159,6 +1125,7 @@ impl Default for ZohaCfg {
                 hide_on_focus_loss: HIDE_ON_FOCUS_LOSS,
                 // prompt_on_exit: PROMPT_ON_EXIT,
             },
+            style: CfgStyle { css: None },
         }
     }
 }
@@ -1166,18 +1133,14 @@ impl Default for ZohaCfg {
 #[derive(Error, Debug)]
 pub enum CfgReadError {
     #[error("overridden config location is specified but it does not exist: {location}")]
-    OverriddenCfgDoesNotExist {
-        location: String,
-    },
+    OverriddenCfgDoesNotExist { location: String },
 
     #[error("no config location specified and user has no home directory")]
     NoHomeDir,
 
     #[error("overridden config not specified and no config file in user home directory, \
-             looked for: {location}")]
-    NoConfigInHomeDir {
-        location: String,
-    },
+             looked in: {}", locations.join(&','.to_string()))]
+    NoConfigInHomeDir { locations: Vec<String> },
 
     #[error("error reading the config file, tried to read: {location}, error: {error}")]
     FileReadError {
@@ -1188,19 +1151,17 @@ pub enum CfgReadError {
 
 impl CfgReadError {
     pub fn is_no_config(&self) -> bool {
-        return matches!(&self, CfgReadError::NoConfigInHomeDir {..});
+        return matches!(&self, CfgReadError::NoConfigInHomeDir { .. });
     }
 }
 
 fn do_read_cfg(cfg_location: &Path) -> Result<String, CfgReadError> {
     return match fs::read_to_string(cfg_location) {
         Ok(content) => Ok(content),
-        Err(err) => {
-            Err(CfgReadError::FileReadError {
-                location: cfg_location.to_str().unwrap().to_string(),
-                error: err,
-            })
-        }
+        Err(err) => Err(CfgReadError::FileReadError {
+            location: cfg_location.to_str().unwrap().to_string(),
+            error: err,
+        }),
     };
 }
 
@@ -1209,7 +1170,7 @@ pub fn read_cfg_content(args: &ZohaArgs) -> Result<String, CfgReadError> {
         let cfg_path: &Path = Path::new(args.cfg_file.as_ref().unwrap());
         if !cfg_path.exists() {
             return Err(CfgReadError::OverriddenCfgDoesNotExist {
-                location: args.cfg_file.as_ref().unwrap().to_string()
+                location: args.cfg_file.as_ref().unwrap().to_string(),
             });
         }
 
@@ -1220,13 +1181,22 @@ pub fn read_cfg_content(args: &ZohaArgs) -> Result<String, CfgReadError> {
                 return Err(CfgReadError::NoHomeDir);
             }
             Some(home_dir) => {
-                let home_cfg_path = home_dir.join(defaults::CONFIG_FILE_NAME);
-                if !home_cfg_path.exists() {
+                let mut path = home_dir.join(defaults::CONFIG_FILE_PATH);
+
+                if !path.exists() {
+                    path = home_dir.join(defaults::CONFIG_FILE_PATH_LEGACY);
+                }
+
+                if !path.exists() {
                     return Err(CfgReadError::NoConfigInHomeDir {
-                        location: home_cfg_path.to_str().unwrap().to_string()
+                        locations: vec![
+                            defaults::CONFIG_FILE_PATH_LEGACY.to_string(),
+                            defaults::CONFIG_FILE_PATH.to_string(),
+                        ],
                     });
                 }
-                home_cfg_path
+
+                path
             }
         };
 
@@ -1234,9 +1204,7 @@ pub fn read_cfg_content(args: &ZohaArgs) -> Result<String, CfgReadError> {
     }
 }
 
-fn sanitize_key(key: Option<String>,
-                default: &str,
-                seen: &mut HashSet<String>) -> Option<String> {
+fn sanitize_key(key: Option<String>, default: &str, seen: &mut HashSet<String>) -> Option<String> {
     fn do_sanitize_key(key: &str) -> Option<String> {
         let (k, _): (u32, ModifierType) = accelerator_parse(key);
 
@@ -1275,8 +1243,11 @@ fn shell(user_cmd: Option<String>) -> String {
             }
         }
 
-        eprintln!("can not execute user provided command, \
-                   ignoring it and using default shell: {}", user_cmd);
+        eprintln!(
+            "can not execute user provided command, \
+                   ignoring it and using default shell: {}",
+            user_cmd
+        );
     }
 
     if let Ok(exec) = std::env::var("SHELL") {

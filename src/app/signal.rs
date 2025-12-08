@@ -1,7 +1,7 @@
 use crate::app::context;
+use dbus::Message;
 use dbus::blocking::Connection;
 use dbus::channel::Sender;
-use dbus::Message;
 use eyre::eyre;
 use gdk::gio::DBusSignalFlags;
 use gdk::prelude::ApplicationExt;
@@ -60,19 +60,19 @@ pub(crate) fn toggle(ctx: &Rc<RefCell<context::ZohaCtx>>) {
         .get_window()
         .expect("application window missing while trying to toggle visibility");
 
+    debug!(
+        "will toggle: at={}:{}, will_show={}",
+        ctx.x, ctx.y, !ctx.showing
+    );
+
     if ctx.showing {
-        let (x, y) = window.position();
         window.hide();
-        ctx.x = x;
-        ctx.y = y;
         ctx.showing = false;
-        debug!("will hide at: {}, {}", x, y);
     } else {
         window.show_all();
         window.present();
         window.move_(ctx.x, ctx.y);
         ctx.showing = true;
-        debug!("will show at: {}, {}", ctx.x, ctx.y);
     }
 
     ctx.last_toggle = SystemTime::now();

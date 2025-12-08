@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::app::{context, signal};
 use crate::ui::actions::set_app_actions;
 use crate::ui::actions::set_win_actions;
 use crate::ui::window::add_tab;
@@ -10,12 +11,11 @@ use crate::ui::window::init_window;
 use crate::ui::window::on_page_reorder;
 use eyre::eyre;
 use gdk::glib::Propagation;
+use gtk::Application;
+use gtk::ApplicationWindow;
 use gtk::prelude::ContainerExt;
 use gtk::prelude::NotebookExt;
 use gtk::prelude::WidgetExt;
-use gtk::Application;
-use gtk::ApplicationWindow;
-use crate::app::{context, signal};
 
 pub fn on_app_activate(ctx: &Rc<RefCell<context::ZohaCtx>>, app: &Application) -> eyre::Result<()> {
     let window: ApplicationWindow = create_window(&ctx.borrow().cfg, app).build();

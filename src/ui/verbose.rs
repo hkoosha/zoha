@@ -1,8 +1,8 @@
 use crate::config::cfg::ZohaCfg;
 use crate::config::color::Pallet;
 use eyre::ContextCompat;
-use gdk::prelude::MonitorExt;
 use gdk::Display;
+use gdk::prelude::MonitorExt;
 
 pub fn list_monitors() -> eyre::Result<Vec<String>> {
     let display: Display = Display::default().wrap_err_with(|| "could not get display")?;
@@ -31,21 +31,44 @@ pub fn print_config(cfg: ZohaCfg) {
 
     println!();
 
-    println!("display.monitor = {}", cfg.display.monitor.unwrap_or_else(or_string));
+    println!(
+        "display.monitor = {}",
+        cfg.display.monitor.unwrap_or_else(or_string)
+    );
     println!("display.title = {}", cfg.display.title);
+    println!("display.margin_left = {}", cfg.display.margin_left);
+    println!("display.margin_right = {}", cfg.display.margin_right);
+    println!("display.margin_top = {}", cfg.display.margin_top);
+    println!("display.margin_bottom = {}", cfg.display.margin_bottom);
     println!("display.x_pos = {}", cfg.display.x_pos);
     println!("display.y_pos = {}", cfg.display.y_pos);
-    println!("display.width = {}",
-             cfg.display.width.map(|it| it.to_string()).unwrap_or_else(or_string));
-    println!("display.height = {}",
-             cfg.display.height.map(|it| it.to_string()).unwrap_or_else(or_string));
+    println!(
+        "display.width = {}",
+        cfg.display
+            .width
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
+    );
+    println!(
+        "display.height = {}",
+        cfg.display
+            .height
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
+    );
     println!(
         "display.width_percentage = {}",
-        cfg.display.width_percentage.map(|it| it.to_string()).unwrap_or_else(or_string),
+        cfg.display
+            .width_percentage
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string),
     );
     println!(
         "display.height_percentage = {}",
-        cfg.display.height_percentage.map(|it| it.to_string()).unwrap_or_else(or_string),
+        cfg.display
+            .height_percentage
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string),
     );
     println!("display.start_hidden = {}", cfg.display.start_hidden);
     println!("display.skip_task_bar = {}", cfg.display.skip_task_bar);
@@ -62,7 +85,10 @@ pub fn print_config(cfg: ZohaCfg) {
             .map(|it| it.to_string())
             .unwrap_or_else(or_string),
     );
-    println!("display.scrollbar_position = {}", cfg.display.scrollbar_position);
+    println!(
+        "display.scrollbar_position = {}",
+        cfg.display.scrollbar_position
+    );
 
     // =================
 
@@ -74,63 +100,108 @@ pub fn print_config(cfg: ZohaCfg) {
     println!("color.pallet = {}", cfg.color.pallet);
     println!(
         "color.color_00 = {}",
-        cfg.color.color_00.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_00
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_01 = {}",
-        cfg.color.color_01.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_01
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_02 = {}",
-        cfg.color.color_02.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_02
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_03 = {}",
-        cfg.color.color_03.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_03
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_04 = {}",
-        cfg.color.color_04.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_04
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_05 = {}",
-        cfg.color.color_05.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_05
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_06 = {}",
-        cfg.color.color_06.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_06
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_07 = {}",
-        cfg.color.color_07.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_07
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_08 = {}",
-        cfg.color.color_08.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_08
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_09 = {}",
-        cfg.color.color_09.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_09
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_10 = {}",
-        cfg.color.color_10.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_10
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_11 = {}",
-        cfg.color.color_11.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_11
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_12 = {}",
-        cfg.color.color_12.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_12
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_13 = {}",
-        cfg.color.color_13.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_13
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
     println!(
         "color.color_14 = {}",
-        cfg.color.color_14.map(|it| it.to_string()).unwrap_or_else(or_string)
+        cfg.color
+            .color_14
+            .map(|it| it.to_string())
+            .unwrap_or_else(or_string)
     );
 
     // =================
@@ -138,7 +209,10 @@ pub fn print_config(cfg: ZohaCfg) {
     println!();
 
     println!("process.command = {}", cfg.process.command);
-    println!("process.working_dir = {}", cfg.process.working_dir.unwrap_or_else(or_string));
+    println!(
+        "process.working_dir = {}",
+        cfg.process.working_dir.unwrap_or_else(or_string)
+    );
 
     // =================
 
@@ -147,50 +221,144 @@ pub fn print_config(cfg: ZohaCfg) {
     println!("keys.copy = {}", cfg.keys.copy.unwrap_or_else(or_string));
     println!("keys.paste = {}", cfg.keys.paste.unwrap_or_else(or_string));
     println!("keys.quit = {}", cfg.keys.quit.unwrap_or_else(or_string));
-    println!("keys.transparency_toggle = {}", cfg.keys.transparency_toggle.unwrap_or_else(or_string));
-    println!("keys.tab_add = {}", cfg.keys.tab_add.unwrap_or_else(or_string));
-    println!("keys.tab_close = {}", cfg.keys.tab_close.unwrap_or_else(or_string));
-    println!("keys.tab_move_backward = {}", cfg.keys.tab_move_backward.unwrap_or_else(or_string));
-    println!("keys.tab_move_forward = {}", cfg.keys.tab_move_forward.unwrap_or_else(or_string));
-    println!("keys.tab_goto_next = {}", cfg.keys.tab_goto_next.unwrap_or_else(or_string));
-    println!("keys.tab_goto_previous = {}", cfg.keys.tab_goto_previous.unwrap_or_else(or_string));
-    println!("keys.tab_goto_last = {}", cfg.keys.tab_goto_last.unwrap_or_else(or_string));
-    println!("keys.tab_goto_01 = {}", cfg.keys.tab_goto_01.unwrap_or_else(or_string));
-    println!("keys.tab_goto_02 = {}", cfg.keys.tab_goto_02.unwrap_or_else(or_string));
-    println!("keys.tab_goto_03 = {}", cfg.keys.tab_goto_03.unwrap_or_else(or_string));
-    println!("keys.tab_goto_04 = {}", cfg.keys.tab_goto_04.unwrap_or_else(or_string));
-    println!("keys.tab_goto_05 = {}", cfg.keys.tab_goto_05.unwrap_or_else(or_string));
-    println!("keys.tab_goto_06 = {}", cfg.keys.tab_goto_06.unwrap_or_else(or_string));
-    println!("keys.tab_goto_07 = {}", cfg.keys.tab_goto_07.unwrap_or_else(or_string));
-    println!("keys.tab_goto_08 = {}", cfg.keys.tab_goto_08.unwrap_or_else(or_string));
+    println!(
+        "keys.transparency_toggle = {}",
+        cfg.keys.transparency_toggle.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_add = {}",
+        cfg.keys.tab_add.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_close = {}",
+        cfg.keys.tab_close.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_move_backward = {}",
+        cfg.keys.tab_move_backward.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_move_forward = {}",
+        cfg.keys.tab_move_forward.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_goto_next = {}",
+        cfg.keys.tab_goto_next.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_goto_previous = {}",
+        cfg.keys.tab_goto_previous.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_goto_last = {}",
+        cfg.keys.tab_goto_last.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_goto_01 = {}",
+        cfg.keys.tab_goto_01.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_goto_02 = {}",
+        cfg.keys.tab_goto_02.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_goto_03 = {}",
+        cfg.keys.tab_goto_03.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_goto_04 = {}",
+        cfg.keys.tab_goto_04.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_goto_05 = {}",
+        cfg.keys.tab_goto_05.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_goto_06 = {}",
+        cfg.keys.tab_goto_06.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_goto_07 = {}",
+        cfg.keys.tab_goto_07.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.tab_goto_08 = {}",
+        cfg.keys.tab_goto_08.unwrap_or_else(or_string)
+    );
 
-    println!("keys.font_size_inc = {}", cfg.keys.font_size_inc.unwrap_or_else(or_string));
-    println!("keys.font_size_dec = {}", cfg.keys.font_size_dec.unwrap_or_else(or_string));
-    println!("keys.font_size_reset = {}", cfg.keys.font_size_reset.unwrap_or_else(or_string));
+    println!(
+        "keys.font_size_inc = {}",
+        cfg.keys.font_size_inc.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.font_size_dec = {}",
+        cfg.keys.font_size_dec.unwrap_or_else(or_string)
+    );
+    println!(
+        "keys.font_size_reset = {}",
+        cfg.keys.font_size_reset.unwrap_or_else(or_string)
+    );
 
     // =================
 
     println!();
 
-    println!("terminal.allow_hyper_link = {}", cfg.terminal.allow_hyper_link);
+    println!(
+        "terminal.allow_hyper_link = {}",
+        cfg.terminal.allow_hyper_link
+    );
     println!("terminal.audible_bell = {}", cfg.terminal.audible_bell);
     println!("terminal.cursor_blink = {}", cfg.terminal.cursor_blink);
     println!("terminal.cursor_shape = {}", cfg.terminal.cursor_shape);
-    println!("terminal.scroll_on_output = {}", cfg.terminal.scroll_on_output);
-    println!("terminal.scroll_on_keystroke = {}", cfg.terminal.scroll_on_keystroke);
-    println!("terminal.mouse_auto_hide = {}", cfg.terminal.mouse_auto_hide);
-    println!("terminal.scrollback_lines = {}", cfg.terminal.scrollback_lines);
-    println!("terminal.backspace_binding = {}", cfg.terminal.backspace_binding);
+    println!(
+        "terminal.scroll_on_output = {}",
+        cfg.terminal.scroll_on_output
+    );
+    println!(
+        "terminal.scroll_on_keystroke = {}",
+        cfg.terminal.scroll_on_keystroke
+    );
+    println!(
+        "terminal.mouse_auto_hide = {}",
+        cfg.terminal.mouse_auto_hide
+    );
+    println!(
+        "terminal.scrollback_lines = {}",
+        cfg.terminal.scrollback_lines
+    );
+    println!(
+        "terminal.backspace_binding = {}",
+        cfg.terminal.backspace_binding
+    );
     println!("terminal.delete_binding = {}", cfg.terminal.delete_binding);
-    println!("terminal.word_char_exceptions = {}", cfg.terminal.word_char_exceptions);
+    println!(
+        "terminal.word_char_exceptions = {}",
+        cfg.terminal.word_char_exceptions
+    );
 
     // =================
 
     println!();
 
-    println!("behavior.terminal_exit_behavior = {}", cfg.behavior.terminal_exit_behavior);
-    println!("behavior.last_tab_exit_behavior = {}", cfg.behavior.last_tab_exit_behavior);
-    println!("behavior.last_tab_exit_behavior = {}", cfg.behavior.last_tab_exit_behavior);
+    println!(
+        "behavior.terminal_exit_behavior = {}",
+        cfg.behavior.terminal_exit_behavior
+    );
+    println!(
+        "behavior.last_tab_exit_behavior = {}",
+        cfg.behavior.last_tab_exit_behavior
+    );
+    println!(
+        "behavior.last_tab_exit_behavior = {}",
+        cfg.behavior.last_tab_exit_behavior
+    );
+
+    // =================
+
+    println!();
+    println!();
+
+    println!("style.css = {}", cfg.style.css.unwrap_or("".to_string()));
 }
 
 pub fn print_pallets() {

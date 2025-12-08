@@ -16,7 +16,7 @@ use zoha::config;
 use zoha::config::args::ZohaArgs;
 use zoha::config::cfg::ZohaCfg;
 use zoha::ui::verbose;
-use zoha::ui::window::create_application;
+use zoha::ui::window::{create_application, init_screen};
 
 fn main() -> Result<()> {
     pretty_env_logger::try_init_custom_env("ZOHA_LOG").expect("could not initialize logger");
@@ -62,6 +62,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
+    let css = cfg.style.css.clone();
     let cfg: Rc<ZohaCfg> = Rc::new(cfg);
 
     let ctx = Rc::new(RefCell::new(context::ZohaCtx::new(cfg)));
@@ -81,7 +82,10 @@ fn main() -> Result<()> {
 
     let g_app = create_application().build();
     g_app.connect_activate(move |app| match window::on_app_activate(&ctx, app) {
-        Ok(_) => signal::connect_gdk_dbus(&ctx, app),
+        Ok(_) => {
+            signal::connect_gdk_dbus(&ctx, app);
+            init_screen(&css);
+        }
         Err(err) => eprintln!("{}", err),
     });
     g_app.run_with_args::<String>(&[]);
