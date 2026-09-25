@@ -1,14 +1,23 @@
 use crate::config::cfg::ZohaCfg;
 use crate::ui::terminal::ZohaTerminal;
-use eyre::eyre;
-use gtk::{ApplicationWindow, Notebook};
+use gtk::{
+    ApplicationWindow,
+    Notebook,
+};
 use log::debug;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{
+    Debug,
+    Formatter,
+};
 use std::ops::Sub;
 use std::rc::Rc;
-use std::time::{Duration, SystemTime};
+use std::time::{
+    Duration,
+    SystemTime,
+};
+use crate::err::ZohaError;
 
 struct TabCounter(usize);
 
@@ -28,7 +37,10 @@ pub struct ZohaCtx {
 }
 
 impl Debug for ZohaCtx {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut Formatter<'_>,
+    ) -> std::fmt::Result {
         write!(
             f,
             "ZohaCtx[fullscreen={}, scaling_factor={}, window={}]",
@@ -36,7 +48,8 @@ impl Debug for ZohaCtx {
             self.font_scale,
             if self.window.is_some() {
                 "set"
-            } else {
+            }
+            else {
                 "unset"
             }
         )
@@ -48,9 +61,11 @@ impl ZohaCtx {
         let fullscreen = cfg.display.fullscreen;
 
         let x = i32::try_from(cfg.display.x_pos).expect("x_pos overflow")
-            + i32::try_from(cfg.display.margin_left).expect("margin_left overflow");
+            + i32::try_from(cfg.display.margin_left)
+                .expect("margin_left overflow");
         let y = i32::try_from(cfg.display.y_pos).expect("y_pos overflow")
-            + i32::try_from(cfg.display.margin_top).expect("margin_top overflow");
+            + i32::try_from(cfg.display.margin_top)
+                .expect("margin_top overflow");
 
         return Self {
             cfg,
@@ -68,9 +83,12 @@ impl ZohaCtx {
         };
     }
 
-    pub(crate) fn set_window(&mut self, window: ApplicationWindow) -> eyre::Result<()> {
+    pub(crate) fn set_window(
+        &mut self,
+        window: ApplicationWindow,
+    ) -> Result<(), ZohaError> {
         if self.window.is_some() {
-            return Err(eyre!("window already set"));
+            return Err(ZohaError::AlreadyWindow);
         }
 
         debug!("setting window");
@@ -79,7 +97,10 @@ impl ZohaCtx {
         return Ok(());
     }
 
-    pub(crate) fn set_notebook(&mut self, notebook: Notebook) {
+    pub(crate) fn set_notebook(
+        &mut self,
+        notebook: Notebook,
+    ) {
         if self.notebook.is_some() {
             panic!("notebook already set")
         }

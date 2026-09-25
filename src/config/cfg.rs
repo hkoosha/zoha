@@ -9,6 +9,34 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::str::FromStr;
 
+use crate::config::cfg::defaults::{
+    ALLOW_HYPERLINK,
+    ALWAYS_ON_TOP,
+    AUDIBLE_BELL,
+    BG_COLOR,
+    CURSOR_BLINK,
+    CURSOR_COLOR,
+    FG_COLOR,
+    FONT,
+    FONT_SIZE,
+    FULLSCREEN,
+    HIDE_ON_FOCUS_LOSS,
+    MOUSE_AUTO_HIDE,
+    SCROLLBACK_LINES,
+    SCROLL_ON_KEYSTROKE,
+    SCROLL_ON_OUTPUT,
+    SKIP_TASK_BAR,
+    START_HIDDEN,
+    STICKY,
+    TAB_EXPAND,
+    TAB_SCROLL_WRAP,
+    TITLE,
+    WORD_CHARS,
+    X,
+    Y,
+};
+use crate::config::color::Pallet;
+use crate::err::ZohaError;
 use gdk::ModifierType;
 use gdk::Monitor;
 use gdk::prelude::MonitorExt;
@@ -20,11 +48,7 @@ use gtk::gdk::RGBA;
 use pango::FontDescription;
 use serde::Deserialize;
 use thiserror::Error;
-use zoha_vte::CursorBlinkMode;
-
-use crate::config::args::ZohaArgs;
-use crate::config::color::Pallet;
-
+use vte_rs::CursorBlinkMode;
 // =============================================================================
 
 #[derive(Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
@@ -35,7 +59,10 @@ pub enum TabMode {
 }
 
 impl Display for TabMode {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut Formatter<'_>,
+    ) -> std::fmt::Result {
         match self {
             TabMode::Always => write!(f, "Always"),
             TabMode::Never => write!(f, "Never"),
@@ -53,7 +80,10 @@ pub enum TabPosition {
 }
 
 impl Display for TabPosition {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut Formatter<'_>,
+    ) -> std::fmt::Result {
         match self {
             TabPosition::Left => write!(f, "Left"),
             TabPosition::Right => write!(f, "Right"),
@@ -82,7 +112,10 @@ pub enum CursorShape {
 }
 
 impl Display for CursorShape {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut Formatter<'_>,
+    ) -> std::fmt::Result {
         match self {
             CursorShape::Block => write!(f, "Block"),
             CursorShape::IBeam => write!(f, "IBeam"),
@@ -92,11 +125,11 @@ impl Display for CursorShape {
 }
 
 impl CursorShape {
-    pub fn to_vte(&self) -> zoha_vte::CursorShape {
+    pub fn to_vte(&self) -> vte_rs::CursorShape {
         match self {
-            CursorShape::Block => zoha_vte::CursorShape::Block,
-            CursorShape::IBeam => zoha_vte::CursorShape::Ibeam,
-            CursorShape::Underline => zoha_vte::CursorShape::Underline,
+            CursorShape::Block => vte_rs::CursorShape::Block,
+            CursorShape::IBeam => vte_rs::CursorShape::Ibeam,
+            CursorShape::Underline => vte_rs::CursorShape::Underline,
         }
     }
 }
@@ -111,7 +144,10 @@ pub enum EraseBinding {
 }
 
 impl Display for EraseBinding {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut Formatter<'_>,
+    ) -> std::fmt::Result {
         match self {
             EraseBinding::Auto => write!(f, "Auto"),
             EraseBinding::AsciiBackspace => write!(f, "AsciiBackspace"),
@@ -123,13 +159,17 @@ impl Display for EraseBinding {
 }
 
 impl EraseBinding {
-    pub fn to_vte(&self) -> zoha_vte::EraseBinding {
+    pub fn to_vte(&self) -> vte_rs::EraseBinding {
         match self {
-            EraseBinding::Auto => zoha_vte::EraseBinding::Auto,
-            EraseBinding::AsciiBackspace => zoha_vte::EraseBinding::AsciiBackspace,
-            EraseBinding::AsciiDelete => zoha_vte::EraseBinding::AsciiDelete,
-            EraseBinding::DeleteSequence => zoha_vte::EraseBinding::DeleteSequence,
-            EraseBinding::Tty => zoha_vte::EraseBinding::Tty,
+            EraseBinding::Auto => vte_rs::EraseBinding::Auto,
+            EraseBinding::AsciiBackspace => {
+                vte_rs::EraseBinding::AsciiBackspace
+            }
+            EraseBinding::AsciiDelete => vte_rs::EraseBinding::AsciiDelete,
+            EraseBinding::DeleteSequence => {
+                vte_rs::EraseBinding::DeleteSequence
+            }
+            EraseBinding::Tty => vte_rs::EraseBinding::Tty,
         }
     }
 }
@@ -142,7 +182,10 @@ pub enum ScrollbarPosition {
 }
 
 impl Display for ScrollbarPosition {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut Formatter<'_>,
+    ) -> std::fmt::Result {
         match self {
             ScrollbarPosition::Left => write!(f, "Left"),
             ScrollbarPosition::Right => write!(f, "Right"),
@@ -162,7 +205,10 @@ pub enum TerminalExitBehavior {
 }
 
 impl Display for TerminalExitBehavior {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut Formatter<'_>,
+    ) -> std::fmt::Result {
         match self {
             TerminalExitBehavior::ExitTerminal => write!(f, "ExitTerminal"),
         }
@@ -177,10 +223,17 @@ pub enum LastTabExitBehavior {
 }
 
 impl Display for LastTabExitBehavior {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut Formatter<'_>,
+    ) -> std::fmt::Result {
         match self {
-            LastTabExitBehavior::RestartTerminal => write!(f, "RestartTerminal"),
-            LastTabExitBehavior::RestartTerminalAndHide => write!(f, "RestartTerminalAndHide"),
+            LastTabExitBehavior::RestartTerminal => {
+                write!(f, "RestartTerminal")
+            }
+            LastTabExitBehavior::RestartTerminalAndHide => {
+                write!(f, "RestartTerminalAndHide")
+            }
             LastTabExitBehavior::Exit => write!(f, "Exit"),
         }
     }
@@ -332,7 +385,7 @@ struct RawCfg {
 
 #[derive(Deserialize, Debug, Default)]
 pub struct CfgProcess {
-    pub command: String,
+    pub exe: Option<PathBuf>,
     pub working_dir: Option<String>,
 }
 
@@ -371,112 +424,144 @@ impl CfgColor {
 
         let mut pallet: Vec<RGBA> = vec![
             match self.color_15 {
-                None => pallet_colors.pop().expect("missing color_15 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_15 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_14 {
-                None => pallet_colors.pop().expect("missing color_14 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_14 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_13 {
-                None => pallet_colors.pop().expect("missing color_13 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_13 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_12 {
-                None => pallet_colors.pop().expect("missing color_12 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_12 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_11 {
-                None => pallet_colors.pop().expect("missing color_11 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_11 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_10 {
-                None => pallet_colors.pop().expect("missing color_10 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_10 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_09 {
-                None => pallet_colors.pop().expect("missing color_09 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_09 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_08 {
-                None => pallet_colors.pop().expect("missing color_08 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_08 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_07 {
-                None => pallet_colors.pop().expect("missing color_07 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_07 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_06 {
-                None => pallet_colors.pop().expect("missing color_06 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_06 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_05 {
-                None => pallet_colors.pop().expect("missing color_05 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_05 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_04 {
-                None => pallet_colors.pop().expect("missing color_04 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_04 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_03 {
-                None => pallet_colors.pop().expect("missing color_03 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_03 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_02 {
-                None => pallet_colors.pop().expect("missing color_02 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_02 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_01 {
-                None => pallet_colors.pop().expect("missing color_01 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_01 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
                 }
             },
             match self.color_00 {
-                None => pallet_colors.pop().expect("missing color_00 in pallet"),
+                None => {
+                    pallet_colors.pop().expect("missing color_00 in pallet")
+                }
                 Some(color) => {
                     pallet_colors.pop();
                     color
@@ -534,22 +619,25 @@ impl CfgDisplay {
                         .next()
                         .unwrap_or(index_or_model)
                         .to_string()
-                } else {
+                }
+                else {
                     index_or_model.to_string()
                 };
 
                 match cfg_model.parse::<u8>() {
                     Ok(index) => {
-                        return display.monitor(index as i32).unwrap_or_else(|| {
-                            eprintln!(
-                                "using primary monitor, \
+                        return display.monitor(index as i32).unwrap_or_else(
+                            || {
+                                eprintln!(
+                                    "using primary monitor, \
                                            configured monitor not found: {}",
-                                index
-                            );
-                            display
-                                .primary_monitor()
-                                .expect("could not get primary monitor")
-                        });
+                                    index
+                                );
+                                display
+                                    .primary_monitor()
+                                    .expect("could not get primary monitor")
+                            },
+                        );
                     }
                     Err(_) => {
                         for m in 0..display.n_monitors() {
@@ -578,19 +666,23 @@ impl CfgDisplay {
 
     pub fn get_width(&self) -> u32 {
         let monitor: Monitor = self.get_monitor();
-        let monitor_width: u32 = monitor.workarea().width().clamp(1, i32::MAX) as u32;
+        let monitor_width: u32 =
+            monitor.workarea().width().clamp(1, i32::MAX) as u32;
 
         let mut w = if let Some(percentage) = self.width_percentage {
             let percentage: u32 = percentage as u32;
             if percentage > 100 {
                 eprintln!("invalid width percentage: {}", percentage);
                 monitor_width
-            } else {
+            }
+            else {
                 percentage / 100 * monitor_width
             }
-        } else if let Some(absolute) = self.width {
+        }
+        else if let Some(absolute) = self.width {
             min(absolute, monitor_width)
-        } else {
+        }
+        else {
             monitor_width
         };
 
@@ -603,19 +695,23 @@ impl CfgDisplay {
 
     pub fn get_height(&self) -> u32 {
         let monitor: Monitor = self.get_monitor();
-        let monitor_height: u32 = monitor.workarea().height().clamp(1, i32::MAX) as u32;
+        let monitor_height: u32 =
+            monitor.workarea().height().clamp(1, i32::MAX) as u32;
 
         let mut h = if let Some(percentage) = self.height_percentage {
             let percentage: u32 = percentage as u32;
             if percentage > 100 {
                 eprintln!("invalid height percentage: {}", percentage);
                 monitor_height
-            } else {
+            }
+            else {
                 percentage / 100 * monitor_height
             }
-        } else if let Some(absolute) = self.height {
+        }
+        else if let Some(absolute) = self.height {
             min(absolute, monitor_height)
-        } else {
+        }
+        else {
             monitor_height
         };
 
@@ -655,6 +751,33 @@ pub struct CfgKey {
     pub font_size_inc: Option<String>,
     pub font_size_dec: Option<String>,
     pub font_size_reset: Option<String>,
+}
+
+impl CfgKey {
+    pub fn is_accelerator_valid(
+        key: &str,
+        seen: &mut HashSet<String>,
+    ) -> Result<(), ZohaError> {
+        let key = key.trim();
+        if key.is_empty() {
+            return Ok(());
+        }
+        let key = key.to_string();
+
+        let (k, _): (u32, ModifierType) = accelerator_parse(&key);
+        if k <= 0 {
+            eprintln!("failed to parse accelerator: {}", key);
+            return Err(ZohaError::AcceleratorInvalid(key));
+        }
+
+        if seen.contains(&key) {
+            eprintln!("duplicated accelerator: {}", key);
+            return Err(ZohaError::AcceleratorInvalid(key.to_string()));
+        }
+
+        seen.insert(key);
+        return Ok(());
+    }
 }
 
 #[derive(Debug)]
@@ -762,18 +885,23 @@ mod defaults {
     pub(super) const ACTION_FONT_SIZE_RESET: &str = "<Ctrl><Alt>0";
 }
 
-fn try_parse_color(name: &str, color_spec: Option<String>) -> Option<RGBA> {
-    color_spec.as_ref()?;
-
-    let color_spec: String = color_spec.unwrap();
+fn try_parse_color(
+    name: &str,
+    color_spec: Option<&str>,
+) -> Option<RGBA> {
+    let color_spec: String = color_spec?.to_string();
 
     return if let Some(color_code) = color_spec.strip_prefix("#x") {
         match u32::from_str_radix(color_code, 16) {
             Ok(code) => {
                 if code > 0xffff {
-                    eprintln!("invalid {}, value too big: {}", name, color_spec);
+                    eprintln!(
+                        "invalid {}, value too big: {}",
+                        name, color_spec
+                    );
                     None
-                } else {
+                }
+                else {
                     Some(RGBA::new(
                         ((code / (256 * 256)) as f64) / (0xFFFF as f64),
                         (((code / 256) % 256) as f64) / (0xFFFF as f64),
@@ -787,7 +915,8 @@ fn try_parse_color(name: &str, color_spec: Option<String>) -> Option<RGBA> {
                 None
             }
         }
-    } else {
+    }
+    else {
         match RGBA::parse(&color_spec) {
             Ok(color) => Some(color),
             Err(_) => {
@@ -798,228 +927,324 @@ fn try_parse_color(name: &str, color_spec: Option<String>) -> Option<RGBA> {
     };
 }
 
-fn try_parse_color_or_default(name: &str, color_spec: Option<String>, default: &str) -> RGBA {
+fn try_parse_color_or_default(
+    name: &str,
+    color_spec: Option<&str>,
+    default: &str,
+) -> RGBA {
     return try_parse_color(name, color_spec).unwrap_or_else(|| {
-        RGBA::parse(default).unwrap_or_else(|_| panic!("invalid default color for: {}", name))
+        RGBA::parse(default)
+            .unwrap_or_else(|_| panic!("invalid default color for: {}", name))
     });
 }
 
 impl ZohaCfg {
-    pub fn from_toml(cfg: &str) -> Self {
-        use defaults::*;
-
-        let mut seen = HashSet::new();
-
-        return match toml::from_str::<RawCfg>(cfg) {
-            Ok(raw) => {
-                Self {
-                    font: CfgFont {
-                        font: FontDescription::from_string(&format!(
-                            "{} {}",
-                            &raw.font.font.unwrap_or_else(|| FONT.to_string()),
-                            &raw.font.size.map(|it| max(it, 1)).unwrap_or(FONT_SIZE),
-                        )),
-                    },
-                    display: CfgDisplay {
-                        monitor: raw.display.monitor,
-                        margin_left: raw.display.margin_left.unwrap_or(0),
-                        margin_right: raw.display.margin_right.unwrap_or(0),
-                        margin_top: raw.display.margin_top.unwrap_or(0),
-                        margin_bottom: raw.display.margin_bottom.unwrap_or(0),
-                        x_pos: raw.display.x_pos.unwrap_or(X),
-                        y_pos: raw.display.y_pos.unwrap_or(Y),
-                        width: raw.display.width,
-                        height: raw.display.height,
-                        width_percentage: raw.display.width_percentage,
-                        height_percentage: raw.display.height_percentage,
-                        start_hidden: raw.display.start_hidden.unwrap_or(START_HIDDEN),
-                        skip_task_bar: raw.display.skip_task_bar.unwrap_or(SKIP_TASK_BAR),
-                        always_on_top: raw.display.always_on_top.unwrap_or(ALWAYS_ON_TOP),
-                        sticky: raw.display.sticky.unwrap_or(STICKY),
-                        fullscreen: raw.display.fullscreen.unwrap_or(FULLSCREEN),
-                        title: raw.display.title.unwrap_or_else(|| TITLE.to_string()),
-                        tab_scroll_wrap: raw.display.tab_scroll_wrap.unwrap_or(TAB_SCROLL_WRAP),
-                        tab_mode: raw.display.tab_mode.unwrap_or(TabMode::Auto),
-                        tab_position: raw.display.tab_position.unwrap_or(TabPosition::Top),
-                        tab_expand: raw.display.tab_expand.unwrap_or(TAB_EXPAND),
-                        tab_title_num_characters: raw.display.tab_title_num_characters,
-                        scrollbar_position: raw
-                            .display
-                            .scrollbar_position
-                            .unwrap_or(ScrollbarPosition::Hidden),
-                    },
-                    color: CfgColor {
-                        bg: try_parse_color_or_default("bg_color", raw.color.bg, BG_COLOR),
-                        fg: try_parse_color_or_default("fg_color", raw.color.fg, FG_COLOR),
-                        cursor: try_parse_color_or_default(
-                            "cursor_color",
-                            raw.color.cursor,
-                            CURSOR_COLOR,
-                        ),
-                        pallet: raw.color.pallet.unwrap_or(Pallet::Tango),
-                        color_00: try_parse_color("color_00", raw.color.color_00),
-                        color_01: try_parse_color("color_01", raw.color.color_01),
-                        color_02: try_parse_color("color_02", raw.color.color_02),
-                        color_03: try_parse_color("color_03", raw.color.color_03),
-                        color_04: try_parse_color("color_04", raw.color.color_04),
-                        color_05: try_parse_color("color_05", raw.color.color_05),
-                        color_06: try_parse_color("color_06", raw.color.color_06),
-                        color_07: try_parse_color("color_07", raw.color.color_07),
-                        color_08: try_parse_color("color_08", raw.color.color_08),
-                        color_09: try_parse_color("color_09", raw.color.color_09),
-                        color_10: try_parse_color("color_10", raw.color.color_10),
-                        color_11: try_parse_color("color_11", raw.color.color_11),
-                        color_12: try_parse_color("color_12", raw.color.color_12),
-                        color_13: try_parse_color("color_13", raw.color.color_13),
-                        color_14: try_parse_color("color_14", raw.color.color_14),
-                        color_15: try_parse_color("color_15", raw.color.color_15),
-                    },
-                    process: CfgProcess {
-                        command: raw
-                            .process
-                            .command
-                            .map(|it| shell(Some(it)))
-                            .unwrap_or_else(|| shell(None)),
-                        working_dir: raw.process.working_dir,
-                    },
-                    keys: CfgKey {
-                        copy: sanitize_key(raw.keys.copy, ACTION_COPY, &mut seen),
-                        paste: sanitize_key(raw.keys.paste, ACTION_PASTE, &mut seen),
-                        quit: sanitize_key(raw.keys.quit, ACTION_QUIT, &mut seen),
-                        transparency_toggle: sanitize_key(
-                            raw.keys.transparency_toggle,
-                            ACTION_TRANSPARENCY_TOGGLE,
-                            &mut seen,
-                        ),
-                        tab_add: sanitize_key(raw.keys.tab_add, ACTION_TAB_ADD, &mut seen),
-                        tab_close: sanitize_key(raw.keys.tab_close, ACTION_TAB_CLOSE, &mut seen),
-                        tab_move_backward: sanitize_key(
-                            raw.keys.tab_move_backward,
-                            ACTION_TAB_MOVE_BACKWARD,
-                            &mut seen,
-                        ),
-                        tab_move_forward: sanitize_key(
-                            raw.keys.tab_move_forward,
-                            ACTION_TAB_MOVE_FORWARD,
-                            &mut seen,
-                        ),
-                        tab_goto_next: sanitize_key(
-                            raw.keys.tab_goto_next,
-                            ACTION_TAB_GOTO_NEXT,
-                            &mut seen,
-                        ),
-                        tab_goto_previous: sanitize_key(
-                            raw.keys.tab_goto_previous,
-                            ACTION_TAB_GOTO_PREV,
-                            &mut seen,
-                        ),
-                        tab_goto_last: sanitize_key(
-                            raw.keys.tab_goto_last,
-                            ACTION_TAB_GOTO_LAST,
-                            &mut seen,
-                        ),
-                        tab_goto_01: sanitize_key(
-                            raw.keys.tab_goto_01,
-                            ACTION_TAB_GOTO_1,
-                            &mut seen,
-                        ),
-                        tab_goto_02: sanitize_key(
-                            raw.keys.tab_goto_02,
-                            ACTION_TAB_GOTO_2,
-                            &mut seen,
-                        ),
-                        tab_goto_03: sanitize_key(
-                            raw.keys.tab_goto_03,
-                            ACTION_TAB_GOTO_3,
-                            &mut seen,
-                        ),
-                        tab_goto_04: sanitize_key(
-                            raw.keys.tab_goto_04,
-                            ACTION_TAB_GOTO_4,
-                            &mut seen,
-                        ),
-                        tab_goto_05: sanitize_key(
-                            raw.keys.tab_goto_05,
-                            ACTION_TAB_GOTO_5,
-                            &mut seen,
-                        ),
-                        tab_goto_06: sanitize_key(
-                            raw.keys.tab_goto_06,
-                            ACTION_TAB_GOTO_6,
-                            &mut seen,
-                        ),
-                        tab_goto_07: sanitize_key(
-                            raw.keys.tab_goto_07,
-                            ACTION_TAB_GOTO_7,
-                            &mut seen,
-                        ),
-                        tab_goto_08: sanitize_key(
-                            raw.keys.tab_goto_08,
-                            ACTION_TAB_GOTO_8,
-                            &mut seen,
-                        ),
-                        font_size_inc: sanitize_key(
-                            raw.keys.font_size_inc,
-                            ACTION_FONT_SIZE_INC,
-                            &mut seen,
-                        ),
-                        font_size_dec: sanitize_key(
-                            raw.keys.font_size_dec,
-                            ACTION_FONT_SIZE_DEC,
-                            &mut seen,
-                        ),
-                        font_size_reset: sanitize_key(
-                            raw.keys.font_size_reset,
-                            ACTION_FONT_SIZE_RESET,
-                            &mut seen,
-                        ),
-                    },
-                    terminal: CfgTerminal {
-                        allow_hyper_link: raw.terminal.allow_hyper_link.unwrap_or(ALLOW_HYPERLINK),
-                        audible_bell: raw.terminal.audible_bell.unwrap_or(AUDIBLE_BELL),
-                        cursor_blink: raw.terminal.cursor_blink.unwrap_or(CURSOR_BLINK),
-                        cursor_shape: raw.terminal.cursor_shape.unwrap_or(CursorShape::Block),
-                        scroll_on_output: raw.terminal.scroll_on_output.unwrap_or(SCROLL_ON_OUTPUT),
-                        scroll_on_keystroke: raw
-                            .terminal
-                            .scroll_on_keystroke
-                            .unwrap_or(SCROLL_ON_KEYSTROKE),
-                        mouse_auto_hide: raw.terminal.mouse_auto_hide.unwrap_or(MOUSE_AUTO_HIDE),
-                        scrollback_lines: raw.terminal.scrollback_lines.unwrap_or(SCROLLBACK_LINES),
-                        backspace_binding: raw
-                            .terminal
-                            .backspace_binding
-                            .unwrap_or(EraseBinding::Auto),
-                        delete_binding: raw.terminal.delete_binding.unwrap_or(EraseBinding::Auto),
-                        word_char_exceptions: raw
-                            .terminal
-                            .word_char_exceptions
-                            .unwrap_or_else(|| WORD_CHARS.to_string()),
-                    },
-                    behavior: CfgBehavior {
-                        terminal_exit_behavior: raw
-                            .behavior
-                            .terminal_exit_behavior
-                            .unwrap_or(TerminalExitBehavior::ExitTerminal),
-                        last_tab_exit_behavior: raw
-                            .behavior
-                            .last_tab_exit_behavior
-                            .unwrap_or(LastTabExitBehavior::RestartTerminal),
-                        hide_on_focus_loss: raw
-                            .behavior
-                            .hide_on_focus_loss
-                            .unwrap_or(HIDE_ON_FOCUS_LOSS),
-                        // prompt_on_exit: raw.behavior.prompt_on_exit
-                        //     .unwrap_or(PROMPT_ON_EXIT),
-                    },
-                    style: CfgStyle { css: raw.style.css },
-                }
-            }
-            Err(e) => {
-                eprintln!("failed to parse config file, using default values: {}", e);
-                Self::default()
+    fn make_raw(cfg: &str) -> Result<RawCfg, ()> {
+        let this = match toml::from_str::<RawCfg>(cfg) {
+            Ok(it) => it,
+            Err(err) => {
+                eprintln!(
+                    "failed to parse config file, using default values: {}",
+                    err
+                );
+                return Err(());
             }
         };
+
+        return Ok(this);
+    }
+
+    fn make_exe(raw: &RawCfg) -> Result<PathBuf, ZohaError> {
+        let this = raw
+            .process
+            .command
+            .as_deref()
+            .map(|it| shell(Some(it)))
+            .flatten()
+            .or_else(|| shell(None))
+            .ok_or(ZohaError::NoShell);
+
+        return this;
+    }
+
+    fn make_font(raw: &RawCfg) -> Result<CfgFont, ZohaError> {
+        let this = CfgFont {
+            font: FontDescription::from_string(&format!(
+                "{} {}",
+                &raw.font.font.as_deref().unwrap_or(FONT),
+                &raw.font.size.map(|it| max(it, 1)).unwrap_or(FONT_SIZE),
+            )),
+        };
+
+        return Ok(this);
+    }
+
+    fn make_display(raw: &RawCfg) -> Result<CfgDisplay, ZohaError> {
+        let this = CfgDisplay {
+            monitor: raw.display.monitor.clone(),
+            margin_left: raw.display.margin_left.unwrap_or(0),
+            margin_right: raw.display.margin_right.unwrap_or(0),
+            margin_top: raw.display.margin_top.unwrap_or(0),
+            margin_bottom: raw.display.margin_bottom.unwrap_or(0),
+            x_pos: raw.display.x_pos.unwrap_or(X),
+            y_pos: raw.display.y_pos.unwrap_or(Y),
+            width: raw.display.width,
+            height: raw.display.height,
+            width_percentage: raw.display.width_percentage,
+            height_percentage: raw.display.height_percentage,
+            start_hidden: raw.display.start_hidden.unwrap_or(START_HIDDEN),
+            skip_task_bar: raw.display.skip_task_bar.unwrap_or(SKIP_TASK_BAR),
+            always_on_top: raw.display.always_on_top.unwrap_or(ALWAYS_ON_TOP),
+            sticky: raw.display.sticky.unwrap_or(STICKY),
+            fullscreen: raw.display.fullscreen.unwrap_or(FULLSCREEN),
+            title: raw.display.title.as_deref().unwrap_or(TITLE).to_string(),
+            tab_scroll_wrap: raw
+                .display
+                .tab_scroll_wrap
+                .unwrap_or(TAB_SCROLL_WRAP),
+            tab_mode: raw.display.tab_mode.unwrap_or(TabMode::Auto),
+            tab_position: raw.display.tab_position.unwrap_or(TabPosition::Top),
+            tab_expand: raw.display.tab_expand.unwrap_or(TAB_EXPAND),
+            tab_title_num_characters: raw.display.tab_title_num_characters,
+            scrollbar_position: raw
+                .display
+                .scrollbar_position
+                .unwrap_or(ScrollbarPosition::Hidden),
+        };
+
+        return Ok(this);
+    }
+
+    fn make_color(raw: &RawCfg) -> Result<CfgColor, ZohaError> {
+        let this = CfgColor {
+            bg: try_parse_color_or_default(
+                "bg_color",
+                raw.color.bg.as_deref(),
+                BG_COLOR,
+            ),
+            fg: try_parse_color_or_default(
+                "fg_color",
+                raw.color.fg.as_deref(),
+                FG_COLOR,
+            ),
+            cursor: try_parse_color_or_default(
+                "cursor_color",
+                raw.color.cursor.as_deref(),
+                CURSOR_COLOR,
+            ),
+            pallet: raw.color.pallet.unwrap_or(Pallet::Tango),
+            color_00: try_parse_color(
+                "color_00",
+                raw.color.color_00.as_deref(),
+            ),
+            color_01: try_parse_color(
+                "color_01",
+                raw.color.color_01.as_deref(),
+            ),
+            color_02: try_parse_color(
+                "color_02",
+                raw.color.color_02.as_deref(),
+            ),
+            color_03: try_parse_color(
+                "color_03",
+                raw.color.color_03.as_deref(),
+            ),
+            color_04: try_parse_color(
+                "color_04",
+                raw.color.color_04.as_deref(),
+            ),
+            color_05: try_parse_color(
+                "color_05",
+                raw.color.color_05.as_deref(),
+            ),
+            color_06: try_parse_color(
+                "color_06",
+                raw.color.color_06.as_deref(),
+            ),
+            color_07: try_parse_color(
+                "color_07",
+                raw.color.color_07.as_deref(),
+            ),
+            color_08: try_parse_color(
+                "color_08",
+                raw.color.color_08.as_deref(),
+            ),
+            color_09: try_parse_color(
+                "color_09",
+                raw.color.color_09.as_deref(),
+            ),
+            color_10: try_parse_color(
+                "color_10",
+                raw.color.color_10.as_deref(),
+            ),
+            color_11: try_parse_color(
+                "color_11",
+                raw.color.color_11.as_deref(),
+            ),
+            color_12: try_parse_color(
+                "color_12",
+                raw.color.color_12.as_deref(),
+            ),
+            color_13: try_parse_color(
+                "color_13",
+                raw.color.color_13.as_deref(),
+            ),
+            color_14: try_parse_color(
+                "color_14",
+                raw.color.color_14.as_deref(),
+            ),
+            color_15: try_parse_color(
+                "color_15",
+                raw.color.color_15.as_deref(),
+            ),
+        };
+
+        return Ok(this);
+    }
+
+    fn make_process(raw: &RawCfg) -> Result<CfgProcess, ZohaError> {
+        let exe = Self::make_exe(&raw)?;
+
+        let this = CfgProcess {
+            exe: Some(exe),
+            working_dir: raw.process.working_dir.clone(),
+        };
+
+        return Ok(this);
+    }
+
+    fn make_key(raw: &RawCfg) -> Result<CfgKey, ZohaError> {
+        let this = CfgKey {
+            copy: raw.keys.copy.clone(),
+            paste: raw.keys.paste.clone(),
+            quit: raw.keys.quit.clone(),
+            transparency_toggle: raw.keys.transparency_toggle.clone(),
+            tab_add: raw.keys.tab_add.clone(),
+            tab_close: raw.keys.tab_close.clone(),
+            tab_move_backward: raw.keys.tab_move_backward.clone(),
+            tab_move_forward: raw.keys.tab_move_forward.clone(),
+            tab_goto_next: raw.keys.tab_goto_next.clone(),
+            tab_goto_previous: raw.keys.tab_goto_previous.clone(),
+            tab_goto_last: raw.keys.tab_goto_last.clone(),
+            tab_goto_01: raw.keys.tab_goto_01.clone(),
+            tab_goto_02: raw.keys.tab_goto_02.clone(),
+            tab_goto_03: raw.keys.tab_goto_03.clone(),
+            tab_goto_04: raw.keys.tab_goto_04.clone(),
+            tab_goto_05: raw.keys.tab_goto_05.clone(),
+            tab_goto_06: raw.keys.tab_goto_06.clone(),
+            tab_goto_07: raw.keys.tab_goto_07.clone(),
+            tab_goto_08: raw.keys.tab_goto_08.clone(),
+            font_size_inc: raw.keys.font_size_inc.clone(),
+            font_size_dec: raw.keys.font_size_dec.clone(),
+            font_size_reset: raw.keys.font_size_reset.clone(),
+        };
+
+        return Ok(this);
+    }
+
+    fn make_terminal(raw: &RawCfg) -> Result<CfgTerminal, ZohaError> {
+        let this = CfgTerminal {
+            allow_hyper_link: raw
+                .terminal
+                .allow_hyper_link
+                .unwrap_or(ALLOW_HYPERLINK),
+            audible_bell: raw.terminal.audible_bell.unwrap_or(AUDIBLE_BELL),
+            cursor_blink: raw.terminal.cursor_blink.unwrap_or(CURSOR_BLINK),
+            cursor_shape: raw
+                .terminal
+                .cursor_shape
+                .unwrap_or(CursorShape::Block),
+            scroll_on_output: raw
+                .terminal
+                .scroll_on_output
+                .unwrap_or(SCROLL_ON_OUTPUT),
+            scroll_on_keystroke: raw
+                .terminal
+                .scroll_on_keystroke
+                .unwrap_or(SCROLL_ON_KEYSTROKE),
+            mouse_auto_hide: raw
+                .terminal
+                .mouse_auto_hide
+                .unwrap_or(MOUSE_AUTO_HIDE),
+            scrollback_lines: raw
+                .terminal
+                .scrollback_lines
+                .unwrap_or(SCROLLBACK_LINES),
+            backspace_binding: raw
+                .terminal
+                .backspace_binding
+                .unwrap_or(EraseBinding::Auto),
+            delete_binding: raw
+                .terminal
+                .delete_binding
+                .unwrap_or(EraseBinding::Auto),
+            word_char_exceptions: raw
+                .terminal
+                .word_char_exceptions
+                .as_deref()
+                .unwrap_or(WORD_CHARS)
+                .to_string(),
+        };
+
+        return Ok(this);
+    }
+
+    fn make_behavior(raw: &RawCfg) -> Result<CfgBehavior, ZohaError> {
+        let this = CfgBehavior {
+            terminal_exit_behavior: raw
+                .behavior
+                .terminal_exit_behavior
+                .unwrap_or(TerminalExitBehavior::ExitTerminal),
+            last_tab_exit_behavior: raw
+                .behavior
+                .last_tab_exit_behavior
+                .unwrap_or(LastTabExitBehavior::RestartTerminal),
+            hide_on_focus_loss: raw
+                .behavior
+                .hide_on_focus_loss
+                .unwrap_or(HIDE_ON_FOCUS_LOSS),
+            // prompt_on_exit: raw.behavior.prompt_on_exit
+            //     .unwrap_or(PROMPT_ON_EXIT),
+        };
+
+        return Ok(this);
+    }
+
+    fn make_style(raw: &RawCfg) -> Result<CfgStyle, ZohaError> {
+        let style = CfgStyle {
+            css: raw.style.css.clone(),
+        };
+
+        return Ok(style);
+    }
+
+    pub fn from_toml(cfg: &str) -> Result<Self, ZohaError> {
+        let raw = match Self::make_raw(cfg) {
+            Ok(it) => it,
+            Err(_) => return Ok(Self::default()),
+        };
+
+        let style = Self::make_style(&raw)?;
+        let font = Self::make_font(&raw)?;
+        let display = Self::make_display(&raw)?;
+        let color = Self::make_color(&raw)?;
+        let process = Self::make_process(&raw)?;
+        let terminal = Self::make_terminal(&raw)?;
+        let behavior = Self::make_behavior(&raw)?;
+        let keys = Self::make_key(&raw)?;
+
+        let this = Self {
+            font,
+            display,
+            color,
+            process,
+            keys,
+            terminal,
+            behavior,
+            style,
+        };
+
+        return Ok(this);
     }
 }
 
@@ -1029,7 +1254,10 @@ impl Default for ZohaCfg {
 
         Self {
             font: CfgFont {
-                font: FontDescription::from_string(&format!("{} {}", FONT, FONT_SIZE)),
+                font: FontDescription::from_string(&format!(
+                    "{} {}",
+                    FONT, FONT_SIZE
+                )),
             },
             display: CfgDisplay {
                 monitor: None,
@@ -1079,14 +1307,16 @@ impl Default for ZohaCfg {
                 color_15: None,
             },
             process: CfgProcess {
-                command: shell(None),
+                exe: shell(None),
                 working_dir: None,
             },
             keys: CfgKey {
                 copy: Some(ACTION_COPY.to_string()),
                 paste: Some(ACTION_PASTE.to_string()),
                 quit: Some(ACTION_QUIT.to_string()),
-                transparency_toggle: Some(ACTION_TRANSPARENCY_TOGGLE.to_string()),
+                transparency_toggle: Some(
+                    ACTION_TRANSPARENCY_TOGGLE.to_string(),
+                ),
                 tab_add: Some(ACTION_TAB_ADD.to_string()),
                 tab_close: Some(ACTION_TAB_CLOSE.to_string()),
                 tab_move_backward: Some(ACTION_TAB_MOVE_BACKWARD.to_string()),
@@ -1132,7 +1362,9 @@ impl Default for ZohaCfg {
 
 #[derive(Error, Debug)]
 pub enum CfgReadError {
-    #[error("overridden config location is specified but it does not exist: {location}")]
+    #[error(
+        "overridden config location is specified but it does not exist: {location}"
+    )]
     OverriddenCfgDoesNotExist { location: String },
 
     #[error("no config location specified and user has no home directory")]
@@ -1142,7 +1374,9 @@ pub enum CfgReadError {
              looked in: {}", locations.join(&','.to_string()))]
     NoConfigInHomeDir { locations: Vec<String> },
 
-    #[error("error reading the config file, tried to read: {location}, error: {error}")]
+    #[error(
+        "error reading the config file, tried to read: {location}, error: {error}"
+    )]
     FileReadError {
         location: String,
         error: std::io::Error,
@@ -1165,17 +1399,20 @@ fn do_read_cfg(cfg_location: &Path) -> Result<String, CfgReadError> {
     };
 }
 
-pub fn read_cfg_content(args: &ZohaArgs) -> Result<String, CfgReadError> {
-    if args.cfg_file.is_some() {
-        let cfg_path: &Path = Path::new(args.cfg_file.as_ref().unwrap());
+pub fn read_cfg_content(
+    cfg_file: Option<&str>
+) -> Result<String, CfgReadError> {
+    if cfg_file.is_some() {
+        let cfg_path: &Path = Path::new(cfg_file.as_ref().unwrap());
         if !cfg_path.exists() {
             return Err(CfgReadError::OverriddenCfgDoesNotExist {
-                location: args.cfg_file.as_ref().unwrap().to_string(),
+                location: cfg_file.as_ref().unwrap().to_string(),
             });
         }
 
         do_read_cfg(cfg_path)
-    } else {
+    }
+    else {
         let cfg_path: PathBuf = match dirs::home_dir() {
             None => {
                 return Err(CfgReadError::NoHomeDir);
@@ -1204,75 +1441,46 @@ pub fn read_cfg_content(args: &ZohaArgs) -> Result<String, CfgReadError> {
     }
 }
 
-fn sanitize_key(key: Option<String>, default: &str, seen: &mut HashSet<String>) -> Option<String> {
-    fn do_sanitize_key(key: &str) -> Option<String> {
-        let (k, _): (u32, ModifierType) = accelerator_parse(key);
-
-        return if k > 0 {
-            Some(key.to_string())
-        } else {
-            eprintln!("failed to parse accelerator: {}", &key);
-            None
-        };
+//noinspection DuplicatedCode
+fn shell(user_cmd: Option<&str>) -> Option<PathBuf> {
+    if let Some(user_cmd) = user_cmd {
+        let it = PathBuf::from(user_cmd);
+        if is_exec(&it) {
+            return Some(it);
+        }
+        else {
+            eprintln!(
+                "can not execute user provided command, using default shell instead",
+            );
+        }
     }
 
-    return if let Some(key) = key {
-        if key.trim().is_empty() {
-            None
-        } else if let Some(key) = do_sanitize_key(&key) {
-            if seen.insert(key.clone()) {
-                Some(key)
-            } else {
-                eprintln!("duplicate key used for short cut, not adding: {}", key);
-                None
-            }
-        } else {
-            do_sanitize_key(default)
-        }
-    } else {
-        do_sanitize_key(default)
-    };
+    if let Ok(it) = std::env::var("SHELL").map(PathBuf::from)
+        && is_exec(&it)
+    {
+        return Some(it);
+    }
+
+    return [
+        "/usr/local/bin",
+        "/usr/bin",
+        "/bin",
+        "/sbin",
+        "/usr/local/sbin",
+    ]
+    .into_iter()
+    .zip(["bash", "zsh", "fish", "sh"])
+    .map(|(dir, shell)| {
+        let mut it = PathBuf::from(dir);
+        it.push(shell);
+        it
+    })
+    .filter(|it| is_exec(it))
+    .next();
 }
 
-fn shell(user_cmd: Option<String>) -> String {
-    if let Some(user_cmd) = user_cmd {
-        let exec_path = Path::new(&user_cmd);
-        if let Ok(meta) = fs::metadata(exec_path) {
-            if !meta.is_dir() && ((meta.permissions().mode() & 0o111) > 0) {
-                return user_cmd;
-            }
-        }
-
-        eprintln!(
-            "can not execute user provided command, \
-                   ignoring it and using default shell: {}",
-            user_cmd
-        );
-    }
-
-    if let Ok(exec) = std::env::var("SHELL") {
-        let exec_path = Path::new(&exec);
-        if let Ok(meta) = fs::metadata(exec_path) {
-            if !meta.is_dir() && ((meta.permissions().mode() & 0o111) > 0) {
-                return exec;
-            }
-        }
-    }
-
-    for exec_path in [
-        "/usr/bin/bash",
-        "/bin/bash",
-        "/usr/bin/zsh",
-        "/bin/zsh",
-        "/usr/bin/fish",
-        "/bin/fish",
-    ] {
-        if let Ok(meta) = fs::metadata(exec_path) {
-            if !meta.is_dir() && ((meta.permissions().mode() & 0o111) > 0) {
-                return exec_path.to_string();
-            }
-        }
-    }
-
-    panic!("Could not locate any shell");
+fn is_exec(it: impl AsRef<Path>) -> bool {
+    return fs::metadata(it).is_ok_and(|meta| {
+        !meta.is_dir() && ((meta.permissions().mode() & 0o111) > 0)
+    });
 }

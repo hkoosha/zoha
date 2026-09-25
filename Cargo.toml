@@ -1,36 +1,31 @@
 [package]
 name = "zoha"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2024"
-authors = ["Koosha Hosseiny <i@koosha.io>"]
-description = "A drop down terminal inspired by Tilda"
-homepage = "https://zoha.rs"
+authors = ["Koosha Hosseiny <git@koosha.io>"]
+description = "A drop down terminal, inspired by Tilda"
+homepage = "https://koosha.io/project/zoha"
 license = "GPL-3.0"
 readme = "README.md"
-rust-version = "1.85.0"
-repository = "https://github.com/hkoosha/zoha"
+repository = "https://gitlab.com/hkoosha/zoha"
 
 [dependencies]
+clap = { version = "4.6", features = ["derive"] }
+dirs = "7.0"
+env_logger = { version = "0.11" }
 log = "0.4"
-pretty_env_logger = { version = "0.5" }
-
-eyre = "0.6"
-thiserror = "2.0"
-
 serde = { version = "1.0", features = ["derive"] }
-toml = "0.9"
+thiserror = "2.0"
+toml = "1.1"
 
-dirs = "6.0"
-clap = { version = "4.5", features = ["derive"] }
+gdk = "0.19.0"
+gtk = "0.19.0"
+pango = { version = "0.22.9", features = ["v1_58"] }
+glib = { version = "0.22.10", features = ["v2_66"] }
 
-gtk = "0.18.1"
-gdk = "0.18.0"
-glib = "0.18.5"
-pango = { version = "0.18.3", features = ["v1_50"] }
-
-#zoha-vte = { path = "../zoha-vte-rs/zoha-vte", features = ["v0_70"] }
-#zoha-vte-sys = { path = "../zoha-vte-rs/zoha-vte-sys", features = ["v0_70"] }
-zoha-vte = { version = "0.6.0", features = ["v0_50"] }
-zoha-vte-sys = { version = "0.6.0", features = ["v0_50"] }
+vte-rs = { path = "../vte-rs/vte-rs" }
+vte-sys = { path = "../vte-rs/vte-sys" }
+# zoha-vte = { version = "0.6.0", features = ["v0_50"] }
+# zoha-vte-sys = { version = "0.6.0", features = ["v0_50"] }
 
 dbus = "0.9"

@@ -1,3 +1,5 @@
+export RUST_BACKTRACE := 'full'
+
 [private]
 def:
   just build

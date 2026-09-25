@@ -1,0 +1,5 @@
+control_brace_style = "ClosingNextLine"
+fn_params_layout = "Vertical"
+trailing_semicolon = true
+imports_layout = "Vertical"
+max_width = 80

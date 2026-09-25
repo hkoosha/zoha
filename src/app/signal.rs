@@ -1,34 +1,58 @@
 use crate::app::context;
+use crate::err::ZohaError;
 use dbus::Message;
 use dbus::blocking::Connection;
 use dbus::channel::Sender;
-use eyre::eyre;
-use gdk::gio::DBusSignalFlags;
+use gdk::gio::{
+    DBusSignalFlags,
+    SignalSubscription,
+};
 use gdk::prelude::ApplicationExt;
-use gtk::prelude::{GtkWindowExt, WidgetExt};
-use gtk::{Application, ApplicationWindow};
-use log::{debug, error, info};
+use gtk::prelude::{
+    GtkWindowExt,
+    WidgetExt,
+};
+use gtk::{
+    Application,
+    ApplicationWindow,
+};
+use log::{
+    debug,
+    error,
+    info,
+};
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::time::{Duration, SystemTime};
+use std::time::{
+    Duration, 
+    SystemTime,
+};
 
-pub const DBUS_INTERFACE: &str = "io.koosha.zoha";
-pub const DBUS_MEMBER: &str = "zoha";
-pub const DBUS_PATH: &str = "/io/koosha/zoha";
+#[derive(Debug)]
+pub struct DBusDest<'a> {
+    pub interface: &'a str,
+    pub member: &'a str,
+    pub path: &'a str,
+}
 
-pub fn connect_gdk_dbus(ctx: &Rc<RefCell<context::ZohaCtx>>, app: &Application) {
+pub fn connect_gdk_dbus(
+    ctx: &Rc<RefCell<context::ZohaCtx>>,
+    app: &Application,
+    dest: &DBusDest,
+) -> SignalSubscription {
     let ctx = Rc::clone(ctx);
 
-    app.dbus_connection()
+    return app
+        .dbus_connection()
         .expect("could not get a dbus connection")
-        .signal_subscribe(
+        .subscribe_to_signal(
             None,
-            Some(DBUS_INTERFACE), // interface_name
-            Some(DBUS_MEMBER),    // member
-            Some(DBUS_PATH),
+            Some(dest.interface),
+            Some(dest.member),
+            Some(dest.path),
             None, // arg0
             DBusSignalFlags::NONE,
-            move |_, _, _, _, _, _| {
+            move |_| {
                 toggle(&ctx);
             },
         );
@@ -68,7 +92,8 @@ pub(crate) fn toggle(ctx: &Rc<RefCell<context::ZohaCtx>>) {
     if ctx.showing {
         window.hide();
         ctx.showing = false;
-    } else {
+    }
+    else {
         window.show_all();
         window.present();
         window.move_(ctx.x, ctx.y);
@@ -78,20 +103,22 @@ pub(crate) fn toggle(ctx: &Rc<RefCell<context::ZohaCtx>>) {
     ctx.last_toggle = SystemTime::now();
 }
 
-pub fn send_toggle_signal_through_dbus() -> eyre::Result<()> {
+pub fn send_toggle_signal_through_dbus(
+    dest: &DBusDest
+) -> Result<(), ZohaError> {
     debug!("sending dbus signal");
 
-    return match Connection::new_session()?.send(new_signal()) {
+    return match Connection::new_session()?.send(new_signal(dest)) {
         Ok(_) => {
             debug!("dbus signal sent");
             Ok(())
         }
-        Err(_) => Err(eyre!("failed to send dbus signal")),
+        Err(_) => Err(ZohaError::UnknownDBus),
     };
 }
 
-pub(crate) fn new_signal() -> Message {
-    let signal = Message::new_signal(DBUS_PATH, DBUS_INTERFACE, DBUS_MEMBER)
+pub(crate) fn new_signal(dest: &DBusDest) -> Message {
+    let signal = Message::new_signal(dest.path, dest.interface, dest.member)
         .expect("failed to construct dbus signal");
 
     return signal;

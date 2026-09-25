@@ -1,7 +1,11 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::app::{context, signal};
+use crate::app::{
+    context,
+    signal,
+};
+use crate::err::ZohaError;
 use crate::ui::actions::set_app_actions;
 use crate::ui::actions::set_win_actions;
 use crate::ui::window::add_tab;
@@ -9,22 +13,19 @@ use crate::ui::window::create_notebook;
 use crate::ui::window::create_window;
 use crate::ui::window::init_window;
 use crate::ui::window::on_page_reorder;
-use eyre::eyre;
 use gdk::glib::Propagation;
 use gtk::Application;
-use gtk::ApplicationWindow;
 use gtk::prelude::ContainerExt;
 use gtk::prelude::NotebookExt;
 use gtk::prelude::WidgetExt;
 
-pub fn on_app_activate(ctx: &Rc<RefCell<context::ZohaCtx>>, app: &Application) -> eyre::Result<()> {
-    let window: ApplicationWindow = create_window(&ctx.borrow().cfg, app).build();
+pub fn on_app_activate(
+    ctx: &Rc<RefCell<context::ZohaCtx>>,
+    app: &Application,
+) -> Result<(), ZohaError> {
+    let window = create_window(&ctx.borrow().cfg, app).build();
 
-    if let Err(err) = init_window(&mut ctx.borrow_mut(), window) {
-        if format!("{}", err) == "window already set" {
-            return Err(eyre!("app already active"));
-        }
-    }
+    init_window(&mut ctx.borrow_mut(), window)?;
 
     let focus_ctx = Rc::clone(ctx);
     ctx.borrow()
@@ -46,12 +47,11 @@ pub fn on_app_activate(ctx: &Rc<RefCell<context::ZohaCtx>>, app: &Application) -
     add_tab(ctx, !ctx.borrow().cfg.display.start_hidden);
 
     let reorder_ctx = Rc::clone(ctx);
-    ctx.borrow()
-        .get_notebook()
-        .unwrap()
-        .connect_page_reordered(move |_, child, index| {
+    ctx.borrow().get_notebook().unwrap().connect_page_reordered(
+        move |_, child, index| {
             on_page_reorder(&reorder_ctx, child, index);
-        });
+        },
+    );
 
     ctx.borrow()
         .get_window()
@@ -61,7 +61,8 @@ pub fn on_app_activate(ctx: &Rc<RefCell<context::ZohaCtx>>, app: &Application) -
     if ctx.borrow().cfg.display.start_hidden {
         ctx.borrow().get_window().unwrap().hide();
         ctx.borrow_mut().showing = false;
-    } else {
+    }
+    else {
         ctx.borrow().get_window().unwrap().show_all();
     }
 

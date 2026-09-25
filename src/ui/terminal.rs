@@ -1,3 +1,22 @@
+use crate::app::context::ZohaCtx;
+use crate::config::cfg::ScrollbarPosition;
+use crate::config::cfg::TerminalExitBehavior;
+use crate::err::ZohaError;
+use crate::ui::window::remove_page_by_hbox;
+use gdk::{
+    RGBA,
+    gio,
+};
+use glib::Pid;
+use glib::SignalHandlerId;
+use glib::SpawnFlags;
+use glib::prelude::ObjectExt;
+use gtk::Orientation;
+use gtk::Scrollbar;
+use gtk::prelude::BoxExt;
+use gtk::prelude::ScrollableExt;
+use gtk::prelude::WidgetExt;
+use log::debug;
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::fmt::Formatter;
@@ -6,27 +25,14 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::rc::Rc;
 use std::string::ToString;
+use vte_rs::PtyFlags;
+use vte_rs::Terminal;
+use vte_rs::{
+    Format,
+    TerminalExt,
+};
 
-use crate::app::context::ZohaCtx;
-use crate::config::cfg::ScrollbarPosition;
-use crate::config::cfg::TerminalExitBehavior;
-use crate::ui::window::remove_page_by_hbox;
-use gdk::RGBA;
-use gdk::gio;
-use gdk::glib::ObjectExt;
-use glib::Pid;
-use glib::SignalHandlerId;
-use glib::SpawnFlags;
-use gtk::Orientation;
-use gtk::Scrollbar;
-use gtk::prelude::BoxExt;
-use gtk::prelude::ScrollableExt;
-use gtk::prelude::WidgetExt;
-use log::debug;
-use zoha_vte::Format;
-use zoha_vte::PtyFlags;
-use zoha_vte::Terminal;
-use zoha_vte::traits::TerminalExt;
+const TIMEOUT: u64 = 1;
 
 struct ZohaTerminalCtx {
     ctx: Rc<RefCell<ZohaCtx>>,
@@ -46,7 +52,10 @@ pub struct ZohaTerminal {
 }
 
 impl Debug for ZohaTerminal {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut Formatter<'_>,
+    ) -> std::fmt::Result {
         write!(
             f,
             "ZohaTerminal[pid={:?}]",
@@ -97,7 +106,8 @@ impl ZohaTerminal {
             vte
         };
 
-        let scrollbar = Scrollbar::new(Orientation::Vertical, vte.vadjustment().as_ref());
+        let scrollbar =
+            Scrollbar::new(Orientation::Vertical, vte.vadjustment().as_ref());
         scrollbar.set_no_show_all(true);
 
         let hbox = gtk::Box::new(Orientation::Horizontal, 0);
@@ -139,27 +149,28 @@ impl ZohaTerminal {
         let ctx = Rc::clone(&self.ctx);
         let ctx0 = Rc::clone(&ctx);
 
-        let handler: SignalHandlerId = self.vte.connect_child_exited(move |vte, _| {
-            let mut cxb = ctx.borrow_mut();
-            let behavior: TerminalExitBehavior =
-                cxb.ctx.borrow().cfg.behavior.terminal_exit_behavior;
-            match behavior {
-                // TerminalExitBehavior::DropToDefaultShell => {
-                //     todo!("DropToDefaultShell");
-                // }
-                // TerminalExitBehavior::RestartCommand => {
-                //     todo!("RestartCommand");
-                // }
-                TerminalExitBehavior::ExitTerminal => {
-                    let handler = cxb.exit_handler.take();
-                    match handler {
-                        None => eprintln!("missing exit signal handler"),
-                        Some(handler) => vte.disconnect(handler),
-                    };
-                    remove_page_by_hbox(&cxb.ctx, &cxb.hbox);
-                }
-            };
-        });
+        let handler: SignalHandlerId =
+            self.vte.connect_child_exited(move |vte, _| {
+                let mut cxb = ctx.borrow_mut();
+                let behavior: TerminalExitBehavior =
+                    cxb.ctx.borrow().cfg.behavior.terminal_exit_behavior;
+                match behavior {
+                    // TerminalExitBehavior::DropToDefaultShell => {
+                    //     todo!("DropToDefaultShell");
+                    // }
+                    // TerminalExitBehavior::RestartCommand => {
+                    //     todo!("RestartCommand");
+                    // }
+                    TerminalExitBehavior::ExitTerminal => {
+                        let handler = cxb.exit_handler.take();
+                        match handler {
+                            None => eprintln!("missing exit signal handler"),
+                            Some(handler) => vte.disconnect(handler),
+                        };
+                        remove_page_by_hbox(&cxb.ctx, &cxb.hbox);
+                    }
+                };
+            });
 
         ctx0.borrow_mut().exit_handler = Some(handler);
     }
@@ -186,8 +197,10 @@ impl ZohaTerminal {
         remove_page_by_hbox(&self.ctx.borrow().ctx, &self.ctx.borrow().hbox);
     }
 
-    #[allow(deprecated)]
-    pub fn spawn(&self, working_dir: Option<PathBuf>) -> eyre::Result<()> {
+    pub fn spawn(
+        &self,
+        working_dir: Option<PathBuf>,
+    ) -> Result<(), ZohaError> {
         let dir: Option<String> = working_dir
             .or_else(|| {
                 self.ctx
@@ -202,19 +215,37 @@ impl ZohaTerminal {
             })
             .map(|it| it.into_os_string().to_string_lossy().into_owned());
 
-        let shell: String = self.ctx.borrow().ctx.borrow().cfg.process.command.clone();
+        let shell: PathBuf = self
+            .ctx
+            .borrow()
+            .ctx
+            .borrow()
+            .cfg
+            .process
+            .exe
+            .clone()
+            .ok_or(ZohaError::NoShell)?;
 
-        let pid = self.vte.spawn_sync(
+        let span_ctx = self.ctx.clone();
+        self.vte.spawn_async(
             PtyFlags::DEFAULT,
             dir.as_deref(),
             &[Path::new(&shell)],
             &[],
             SpawnFlags::DEFAULT,
-            Some(&mut || {}),
+            Some(Box::new(move || {})),
+            (TIMEOUT * 1000) as i32,
             None::<&gio::Cancellable>,
-        )?;
+            Some(Box::new(move |_, pid, err| {
+                eprintln!("we are here!");
+                if let Some(err) = err {
+                    eprintln!("failed to spawn TTY: {}", err);
+                    panic!("failed to spawn TTY: {}", err);
+                }
 
-        self.ctx.borrow_mut().pid = Some(pid);
+                span_ctx.borrow_mut().pid = Some(pid);
+            })),
+        );
 
         self.enforce_font_size();
 
@@ -232,7 +263,10 @@ impl ZohaTerminal {
         let path = match fs::read_link(Path::new(&cwd_path)) {
             Ok(path) => path,
             Err(err) => {
-                eprintln!("could not get working directory: {}, pid={}", err, pid);
+                eprintln!(
+                    "could not get working directory: {}, pid={}",
+                    err, pid
+                );
                 return None;
             }
         };

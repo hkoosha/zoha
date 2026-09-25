@@ -4,8 +4,9 @@ use crate::config::cfg::LastTabExitBehavior;
 use crate::config::cfg::TabMode;
 use crate::config::cfg::ZohaCfg;
 use crate::config::style;
+use crate::err::ZohaError;
 use crate::ui::terminal::ZohaTerminal;
-use gdk::glib::Cast;
+use glib::prelude::Cast;
 use gtk::Application;
 use gtk::ApplicationWindow;
 use gtk::Label;
@@ -18,18 +19,20 @@ use gtk::prelude::GtkWindowExt;
 use gtk::prelude::NotebookExt;
 use gtk::prelude::NotebookExtManual;
 use gtk::prelude::WidgetExt;
-use gtk::prelude::{ContainerExt, StyleContextExt};
+use gtk::prelude::{
+    ContainerExt,
+    StyleContextExt,
+};
 use log::debug;
 use log::trace;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-pub const APPLICATION_ID: &str = "io.koosha.zoha";
-
-pub fn create_application() -> ApplicationBuilder {
+pub fn create_application(app_id: &str) -> ApplicationBuilder {
     trace!("create app");
-    let application: ApplicationBuilder = Application::builder().application_id(APPLICATION_ID);
+    let application: ApplicationBuilder =
+        Application::builder().application_id(app_id);
 
     return application;
 }
@@ -47,7 +50,10 @@ pub fn init_screen(css: &Option<String>) {
     }
 }
 
-pub fn create_window(cfg: &ZohaCfg, app: &Application) -> ApplicationWindowBuilder {
+pub fn create_window(
+    cfg: &ZohaCfg,
+    app: &Application,
+) -> ApplicationWindowBuilder {
     let h: u32 = cfg.display.get_height();
     let w: u32 = cfg.display.get_width();
 
@@ -62,7 +68,10 @@ pub fn create_window(cfg: &ZohaCfg, app: &Application) -> ApplicationWindowBuild
     return window;
 }
 
-pub fn init_window(ctx: &mut ZohaCtx, window: ApplicationWindow) -> eyre::Result<()> {
+pub fn init_window(
+    ctx: &mut ZohaCtx,
+    window: ApplicationWindow,
+) -> Result<(), ZohaError> {
     trace!("init window");
     ctx.set_window(window.clone())?;
 
@@ -82,7 +91,8 @@ pub fn init_window(ctx: &mut ZohaCtx, window: ApplicationWindow) -> eyre::Result
     if ctx.cfg.display.sticky {
         debug!("window sticky");
         window.stick();
-    } else {
+    }
+    else {
         debug!("window not sticky");
         window.unstick();
     }
@@ -90,7 +100,8 @@ pub fn init_window(ctx: &mut ZohaCtx, window: ApplicationWindow) -> eyre::Result
     if ctx.fullscreen {
         debug!("window fullscreen");
         window.fullscreen();
-    } else {
+    }
+    else {
         debug!("window not fullscreen");
         window.unfullscreen();
     }
@@ -103,15 +114,20 @@ pub fn init_window(ctx: &mut ZohaCtx, window: ApplicationWindow) -> eyre::Result
     // Set RGBA color map if possible so VTE can use real alpha channels for transparency.
     if let Some(screen) = GtkWindowExt::screen(&window) {
         if screen.is_composited() {
-            if let Some(visual) = screen.rgba_visual().or_else(|| screen.system_visual()) {
+            if let Some(visual) =
+                screen.rgba_visual().or_else(|| screen.system_visual())
+            {
                 window.set_visual(Some(&visual));
-            } else {
+            }
+            else {
                 eprintln!("no visual set on window due to missing visual");
             }
-        } else {
+        }
+        else {
             eprintln!("no visual set on window due to screen not composited");
         }
-    } else {
+    }
+    else {
         eprintln!("missing gtk screen for set visual on window init");
     }
 
@@ -140,7 +156,11 @@ pub fn create_notebook(ctx: &mut ZohaCtx) {
     }
 }
 
-pub fn on_page_reorder(ctx: &Rc<RefCell<ZohaCtx>>, child: &Widget, new_position: u32) {
+pub fn on_page_reorder(
+    ctx: &Rc<RefCell<ZohaCtx>>,
+    child: &Widget,
+    new_position: u32,
+) {
     let child = match child.downcast_ref::<gtk::Box>() {
         None => {
             eprintln!("could not get child hbox on pages reorder");
@@ -171,16 +191,21 @@ pub fn on_page_reorder(ctx: &Rc<RefCell<ZohaCtx>>, child: &Widget, new_position:
     let move_bkw = !move_fwd;
 
     for (idx, term) in ctx.borrow().terminals.borrow_mut().drain() {
-        if idx < old_idx && idx < new_position || old_idx < idx && new_position < idx {
+        if idx < old_idx && idx < new_position
+            || old_idx < idx && new_position < idx
+        {
             set_label(ctx, &term, idx);
             new_order.insert(idx, term);
-        } else if move_fwd && old_idx != idx {
+        }
+        else if move_fwd && old_idx != idx {
             set_label(ctx, &term, idx - 1);
             new_order.insert(idx - 1, term);
-        } else if move_bkw && old_idx != idx {
+        }
+        else if move_bkw && old_idx != idx {
             set_label(ctx, &term, idx + 1);
             new_order.insert(idx + 1, term);
-        } else {
+        }
+        else {
             set_label(ctx, &term, new_position);
             new_order.insert(new_position, term);
         }
@@ -189,7 +214,10 @@ pub fn on_page_reorder(ctx: &Rc<RefCell<ZohaCtx>>, child: &Widget, new_position:
     ctx.borrow().terminals.borrow_mut().extend(new_order);
 }
 
-pub fn on_page_removed(ctx: &Rc<RefCell<ZohaCtx>>, page: u32) {
+pub fn on_page_removed(
+    ctx: &Rc<RefCell<ZohaCtx>>,
+    page: u32,
+) {
     debug!("page removed: {}", page);
 
     let cxb = ctx.borrow();
@@ -210,7 +238,10 @@ pub fn on_page_removed(ctx: &Rc<RefCell<ZohaCtx>>, page: u32) {
     terminals.extend(adjusted);
 }
 
-pub fn remove_page_by_hbox(ctx: &Rc<RefCell<ZohaCtx>>, hbox: &gtk::Box) {
+pub fn remove_page_by_hbox(
+    ctx: &Rc<RefCell<ZohaCtx>>,
+    hbox: &gtk::Box,
+) {
     let page: Option<u32> = match ctx.borrow().get_notebook() {
         None => {
             eprintln!("missing notebook on term exit");
@@ -242,7 +273,10 @@ pub fn remove_page_by_hbox(ctx: &Rc<RefCell<ZohaCtx>>, hbox: &gtk::Box) {
     adjust_tab_bar(ctx);
 }
 
-pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>, grab_focus: bool) {
+pub fn add_tab(
+    ctx: &Rc<RefCell<ZohaCtx>>,
+    grab_focus: bool,
+) {
     trace!("tab_add, focus: {}", grab_focus);
 
     let term = ZohaTerminal::new(Rc::clone(ctx));
@@ -271,7 +305,8 @@ pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>, grab_focus: bool) {
                         }
                     }
                 }
-            } else {
+            }
+            else {
                 trace!("add_tab: no active page");
                 (None, None)
             }
@@ -291,8 +326,8 @@ pub fn add_tab(ctx: &Rc<RefCell<ZohaCtx>>, grab_focus: bool) {
         Some(notebook) => {
             term.connect_signals();
 
-            let new_page_index: u32 =
-                notebook.append_page(&term.hbox, Some(&Label::new(Some("Zoha"))));
+            let new_page_index: u32 = notebook
+                .append_page(&term.hbox, Some(&Label::new(Some("Zoha"))));
             trace!("tab_add, new_page_index: {}", new_page_index);
 
             notebook.set_current_page(Some(new_page_index));
@@ -343,7 +378,10 @@ pub fn move_forward(ctx: &Rc<RefCell<ZohaCtx>>) {
     move_tab(ctx, true);
 }
 
-pub fn move_tab(ctx: &Rc<RefCell<ZohaCtx>>, fwd: bool) {
+pub fn move_tab(
+    ctx: &Rc<RefCell<ZohaCtx>>,
+    fwd: bool,
+) {
     trace!("move tab, fwd: {}", fwd);
 
     if ctx.borrow().get_notebook().is_none() {
@@ -365,20 +403,25 @@ pub fn move_tab(ctx: &Rc<RefCell<ZohaCtx>>, fwd: bool) {
         Some(page) => page,
     };
 
-    let page: Widget = match ctx.borrow().get_notebook().unwrap().nth_page(Some(idx)) {
-        None => {
-            eprintln!("could not get notebook page on move_tab at index: {}", idx);
-            return;
-        }
-        Some(page) => page,
-    };
+    let page: Widget =
+        match ctx.borrow().get_notebook().unwrap().nth_page(Some(idx)) {
+            None => {
+                eprintln!(
+                    "could not get notebook page on move_tab at index: {}",
+                    idx
+                );
+                return;
+            }
+            Some(page) => page,
+        };
 
     let new_index = match fwd {
         true => (idx + 1) % pages,
         false => {
             if idx == 0 {
                 pages
-            } else {
+            }
+            else {
                 idx - 1
             }
         }
@@ -400,7 +443,8 @@ pub fn goto_next(ctx: &Rc<RefCell<ZohaCtx>>) {
                 && ctx.borrow().cfg.display.tab_scroll_wrap
             {
                 notebook.set_current_page(Some(0));
-            } else {
+            }
+            else {
                 notebook.next_page();
             }
         }
@@ -413,9 +457,11 @@ pub fn goto_previous(ctx: &Rc<RefCell<ZohaCtx>>) {
     match ctx.borrow().get_notebook() {
         None => eprintln!("missing notebook on goto next tab"),
         Some(notebook) => {
-            if notebook.page() == 0 && ctx.borrow().cfg.display.tab_scroll_wrap {
+            if notebook.page() == 0 && ctx.borrow().cfg.display.tab_scroll_wrap
+            {
                 notebook.set_current_page(Some(notebook.n_pages() - 1));
-            } else {
+            }
+            else {
                 notebook.prev_page();
             }
         }
@@ -434,7 +480,10 @@ pub fn goto_last(ctx: &Rc<RefCell<ZohaCtx>>) {
     }
 }
 
-pub fn goto_n(ctx: &Rc<RefCell<ZohaCtx>>, n: usize) {
+pub fn goto_n(
+    ctx: &Rc<RefCell<ZohaCtx>>,
+    n: usize,
+) {
     trace!("goto_n: {}", n);
 
     match ctx.borrow().get_notebook() {
@@ -457,7 +506,8 @@ pub fn adjust_tab_bar(ctx: &Rc<RefCell<ZohaCtx>>) {
                 if num_pages < 2 {
                     trace!("hiding tabs");
                     notebook.set_show_tabs(false);
-                } else {
+                }
+                else {
                     trace!("showing tabs");
                     notebook.set_show_tabs(true);
                 }
@@ -478,8 +528,11 @@ pub fn adjust_tab_bar(ctx: &Rc<RefCell<ZohaCtx>>) {
                         trace!("exit on last tab close");
                         if let Some(window) = &ctx.borrow().window {
                             window.close();
-                        } else {
-                            eprintln!("window missing on exit request on last tab closed")
+                        }
+                        else {
+                            eprintln!(
+                                "window missing on exit request on last tab closed"
+                            )
                         }
                     }
                 }
@@ -545,7 +598,10 @@ pub fn font_reset(ctx: &Rc<RefCell<ZohaCtx>>) {
     });
 }
 
-fn get_term(ctx: &Rc<RefCell<ZohaCtx>>, action: &'_ str) -> Option<ZohaTerminal> {
+fn get_term(
+    ctx: &Rc<RefCell<ZohaCtx>>,
+    action: &'_ str,
+) -> Option<ZohaTerminal> {
     let active_page: u32 = match ctx.borrow().get_notebook() {
         None => {
             eprintln!("missing notebook on action callback for: {}", action);
@@ -574,52 +630,75 @@ fn get_term(ctx: &Rc<RefCell<ZohaCtx>>, action: &'_ str) -> Option<ZohaTerminal>
     return term;
 }
 
-fn set_label(ctx: &Rc<RefCell<ZohaCtx>>, term: &ZohaTerminal, idx: u32) {
+fn set_label(
+    ctx: &Rc<RefCell<ZohaCtx>>,
+    term: &ZohaTerminal,
+    idx: u32,
+) {
     trace!("set_label, idx={}", idx);
 
     match ctx.borrow().get_notebook() {
         None => {
             eprintln!("missing notebook on page re-order");
         }
-        Some(notebook) => match term.get_cwd().map(|it| it.to_string_lossy().to_string()) {
-            None => {
-                notebook.set_tab_label_text(&term.hbox, &format!("[{}/{}]", idx, term.tab_counter))
-            }
-            Some(cwd) => match ctx.borrow().cfg.display.tab_title_num_characters {
+        Some(notebook) => {
+            match term.get_cwd().map(|it| it.to_string_lossy().to_string()) {
                 None => notebook.set_tab_label_text(
                     &term.hbox,
-                    &format!("[{}] - {}@{}", idx, term.tab_counter, cwd.as_str()),
+                    &format!("[{}/{}]", idx, term.tab_counter),
                 ),
-                Some(chars) => {
-                    if cwd.len() <= chars.unsigned_abs() as usize {
-                        notebook.set_tab_label_text(
-                            &term.hbox,
-                            &format!("[{}] - {}@{}", idx, term.tab_counter, cwd.as_str(),),
-                        )
-                    } else if chars > 0 {
-                        notebook.set_tab_label_text(
+                Some(cwd) => {
+                    match ctx.borrow().cfg.display.tab_title_num_characters {
+                        None => notebook.set_tab_label_text(
                             &term.hbox,
                             &format!(
                                 "[{}] - {}@{}",
                                 idx,
                                 term.tab_counter,
-                                &cwd.as_str()
-                                    [(cwd.len() - (chars.unsigned_abs() as usize))..cwd.len()],
+                                cwd.as_str()
                             ),
-                        );
-                    } else {
-                        notebook.set_tab_label_text(
-                            &term.hbox,
-                            &format!(
-                                "[{}] - {}@{}",
-                                idx,
-                                term.tab_counter,
-                                &cwd.as_str()[0..(chars.unsigned_abs() as usize)],
-                            ),
-                        );
+                        ),
+                        Some(chars) => {
+                            if cwd.len() <= chars.unsigned_abs() as usize {
+                                notebook.set_tab_label_text(
+                                    &term.hbox,
+                                    &format!(
+                                        "[{}] - {}@{}",
+                                        idx,
+                                        term.tab_counter,
+                                        cwd.as_str(),
+                                    ),
+                                )
+                            }
+                            else if chars > 0 {
+                                notebook.set_tab_label_text(
+                                    &term.hbox,
+                                    &format!(
+                                        "[{}] - {}@{}",
+                                        idx,
+                                        term.tab_counter,
+                                        &cwd.as_str()[(cwd.len()
+                                            - (chars.unsigned_abs() as usize))
+                                            ..cwd.len()],
+                                    ),
+                                );
+                            }
+                            else {
+                                notebook.set_tab_label_text(
+                                    &term.hbox,
+                                    &format!(
+                                        "[{}] - {}@{}",
+                                        idx,
+                                        term.tab_counter,
+                                        &cwd.as_str()[0..(chars.unsigned_abs()
+                                            as usize)],
+                                    ),
+                                );
+                            }
+                        }
                     }
                 }
-            },
-        },
+            }
+        }
     }
 }

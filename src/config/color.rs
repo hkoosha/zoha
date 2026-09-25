@@ -1,6 +1,9 @@
 use gdk::RGBA;
 use serde::Deserialize;
-use std::fmt::{Display, Formatter};
+use std::fmt::{
+    Display,
+    Formatter,
+};
 
 fn f(value: i32) -> f64 {
     return (value as f64) / (0xffff as f64);
@@ -19,7 +22,10 @@ pub enum Pallet {
 }
 
 impl Display for Pallet {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut Formatter<'_>,
+    ) -> std::fmt::Result {
         match self {
             Pallet::Tango => write!(f, "Tango"),
             Pallet::Zenburn => write!(f, "Zenburn"),
@@ -58,14 +64,14 @@ impl Pallet {
     fn zenburn() -> Vec<RGBA> {
         return vec![
             RGBA::new(f(0x2222), f(0x2222), f(0x2222), 1.0), //black
-            RGBA::new(f(0x8080), f(0x3232), f(0x3232), 1.0), //darkred
-            RGBA::new(f(0x5b5b), f(0x7676), f(0x2f2f), 1.0), //darkgreen
+            RGBA::new(f(0x8080), f(0x3232), f(0x3232), 1.0), //dark_red
+            RGBA::new(f(0x5b5b), f(0x7676), f(0x2f2f), 1.0), //dark_green
             RGBA::new(f(0xaaaa), f(0x9999), f(0x4343), 1.0), //brown
-            RGBA::new(f(0x3232), f(0x4c4c), f(0x8080), 1.0), //darkblue
-            RGBA::new(f(0x7070), f(0x6c6c), f(0x9a9a), 1.0), //darkmagenta
-            RGBA::new(f(0x9292), f(0xb1b1), f(0x9e9e), 1.0), //darkcyan
-            RGBA::new(f(0xffff), f(0xffff), f(0xffff), 1.0), //lightgrey
-            RGBA::new(f(0x2222), f(0x2222), f(0x2222), 1.0), //darkgrey
+            RGBA::new(f(0x3232), f(0x4c4c), f(0x8080), 1.0), //dark_blue
+            RGBA::new(f(0x7070), f(0x6c6c), f(0x9a9a), 1.0), //dark_magenta
+            RGBA::new(f(0x9292), f(0xb1b1), f(0x9e9e), 1.0), //dark_cyan
+            RGBA::new(f(0xffff), f(0xffff), f(0xffff), 1.0), //light_grey
+            RGBA::new(f(0x2222), f(0x2222), f(0x2222), 1.0), //dark_grey
             RGBA::new(f(0x9898), f(0x2b2b), f(0x2b2b), 1.0), //red
             RGBA::new(f(0x8989), f(0xb8b8), f(0x3f3f), 1.0), //green
             RGBA::new(f(0xefef), f(0xefef), f(0x6060), 1.0), //yellow

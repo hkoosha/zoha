@@ -5,6 +5,7 @@ use gdk::gio::Action;
 use gtk::Application;
 use gtk::ApplicationWindow;
 use gtk::gio::SimpleAction;
+use gtk::glib as _;
 use gtk::glib::clone;
 use gtk::prelude::ActionMapExt;
 use gtk::prelude::ApplicationWindowExt;
@@ -51,18 +52,29 @@ const ACTION__ZOHA__FONT_INC: &str = "zoha.font_inc";
 const ACTION__ZOHA__FONT_DEC: &str = "zoha.font_dec";
 const ACTION__ZOHA__FONT_RESET: &str = "zoha.font_reset";
 
-pub fn set_app_actions(ctx: &ZohaCtx, application: &Application) {
+pub fn set_app_actions(
+    ctx: &ZohaCtx,
+    application: &Application,
+) {
     if let Some(quit) = &ctx.cfg.keys.quit {
-        application.set_accels_for_action(&format!("win.{}", ACTION__WIN__QUIT), &[quit]);
+        application.set_accels_for_action(
+            &format!("win.{}", ACTION__WIN__QUIT),
+            &[quit],
+        );
     }
 
     if let Some(tab_add) = &ctx.cfg.keys.tab_add {
-        application.set_accels_for_action(&format!("win.{}", ACTION__ZOHA__TAB_ADD), &[tab_add]);
+        application.set_accels_for_action(
+            &format!("win.{}", ACTION__ZOHA__TAB_ADD),
+            &[tab_add],
+        );
     }
 
     if let Some(tab_close) = &ctx.cfg.keys.tab_close {
-        application
-            .set_accels_for_action(&format!("win.{}", ACTION__ZOHA__TAB_CLOSE), &[tab_close]);
+        application.set_accels_for_action(
+            &format!("win.{}", ACTION__ZOHA__TAB_CLOSE),
+            &[tab_close],
+        );
     }
 
     if let Some(tab_move_fwd) = &ctx.cfg.keys.tab_move_forward {
@@ -159,11 +171,17 @@ pub fn set_app_actions(ctx: &ZohaCtx, application: &Application) {
     // ---------------------------------
 
     if let Some(copy) = &ctx.cfg.keys.copy {
-        application.set_accels_for_action(&format!("win.{}", ACTION__ZOHA__COPY), &[copy]);
+        application.set_accels_for_action(
+            &format!("win.{}", ACTION__ZOHA__COPY),
+            &[copy],
+        );
     }
 
     if let Some(paste) = &ctx.cfg.keys.paste {
-        application.set_accels_for_action(&format!("win.{}", ACTION__ZOHA__PASTE), &[paste]);
+        application.set_accels_for_action(
+            &format!("win.{}", ACTION__ZOHA__PASTE),
+            &[paste],
+        );
     }
 
     // ---------------------------------
@@ -178,16 +196,24 @@ pub fn set_app_actions(ctx: &ZohaCtx, application: &Application) {
     // ---------------------------------
 
     if let Some(font_inc) = &ctx.cfg.keys.font_size_inc {
-        application.set_accels_for_action(&format!("win.{}", ACTION__ZOHA__FONT_INC), &[font_inc]);
+        application.set_accels_for_action(
+            &format!("win.{}", ACTION__ZOHA__FONT_INC),
+            &[font_inc],
+        );
     }
 
     if let Some(font_dec) = &ctx.cfg.keys.font_size_dec {
-        application.set_accels_for_action(&format!("win.{}", ACTION__ZOHA__FONT_DEC), &[font_dec]);
+        application.set_accels_for_action(
+            &format!("win.{}", ACTION__ZOHA__FONT_DEC),
+            &[font_dec],
+        );
     }
 
     if let Some(font_reset) = &ctx.cfg.keys.font_size_reset {
-        application
-            .set_accels_for_action(&format!("win.{}", ACTION__ZOHA__FONT_RESET), &[font_reset]);
+        application.set_accels_for_action(
+            &format!("win.{}", ACTION__ZOHA__FONT_RESET),
+            &[font_reset],
+        );
     }
 }
 
@@ -199,13 +225,18 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
 
     if let Some(key) = cxb.cfg.keys.quit.as_ref() {
         let action = SimpleAction::new(ACTION__WIN__QUIT, None);
-        action.connect_activate(clone!(@weak window => move |_,_| {
-            window.close();
-        }));
+        action.connect_activate(clone!(
+            #[weak]
+            window,
+            move |_, _| {
+                window.close();
+            }
+        ));
         window.add_action(&action);
 
         debug!("set quit key to: {}", key);
-    } else {
+    }
+    else {
         debug!("quit key not set");
     }
 
@@ -220,7 +251,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_add key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_add key not set");
     }
 
@@ -233,7 +265,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_close key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_close key not set");
     }
 
@@ -246,7 +279,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_move_backward key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_move_backward key not set");
     }
 
@@ -259,7 +293,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_move_forward key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_move_forward key not set");
     }
 
@@ -272,7 +307,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_goto_next key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_goto_next key not set");
     }
 
@@ -285,7 +321,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_goto_previous key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_goto_previous key not set");
     }
 
@@ -298,7 +335,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_goto_last key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_goto_last key not set");
     }
 
@@ -311,7 +349,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_goto_01 key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_goto_01 key not set");
     }
 
@@ -324,7 +363,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_goto_02 key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_goto_02 key not set");
     }
 
@@ -337,7 +377,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_goto_03 key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_goto_03 key not set");
     }
 
@@ -350,7 +391,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_goto_04 key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_goto_04 key not set");
     }
 
@@ -363,7 +405,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_goto_05 key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_goto_05 key not set");
     }
 
@@ -376,7 +419,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_goto_06 key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_goto_06 key not set");
     }
 
@@ -389,7 +433,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_goto_07 key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_goto_07 key not set");
     }
 
@@ -402,7 +447,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set tab_goto_08 key to: {}", key);
-    } else {
+    }
+    else {
         debug!("tab_goto_08 key not set");
     }
 
@@ -417,7 +463,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set copy key to: {}", key);
-    } else {
+    }
+    else {
         debug!("copy key not set");
     }
 
@@ -430,7 +477,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set paste key to: {}", key);
-    } else {
+    }
+    else {
         debug!("paste key not set");
     }
 
@@ -445,7 +493,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set transparency_toggle key to: {}", key);
-    } else {
+    }
+    else {
         debug!("transparency_toggle key not set");
     }
 
@@ -460,7 +509,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set font_size_inc key to: {}", key);
-    } else {
+    }
+    else {
         debug!("font_size_inc key not set");
     }
 
@@ -473,7 +523,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set font_size_dec key to: {}", key);
-    } else {
+    }
+    else {
         debug!("font_size_dec key not set");
     }
 
@@ -486,7 +537,8 @@ pub fn set_win_actions(ctx: &Rc<RefCell<ZohaCtx>>) {
         window.add_action(&Action::from(sa));
 
         debug!("set font_size_reset key to: {}", key);
-    } else {
+    }
+    else {
         debug!("font_size_reset key not set");
     }
 }
