@@ -1,4 +1,11 @@
-Drop down terminal inspired by Tilda.
+# NO LONGER DEVELOPED
+
+It was fun creating this, but now I'm going to use https://wezterm.org in combination
+with https://github.com/noctuid/tdrop to achieve the same effect and more.
+
+# Zoha
+
+Drop down terminal inspired by [Tilda](https://github.com/lanoxx/tilda).
 
 (GTK4 flavor: [hkoosha/zoha4](https://github.com/hkoosha/zoha4))
 
