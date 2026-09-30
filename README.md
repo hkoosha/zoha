@@ -1,7 +1,7 @@
 # NO LONGER DEVELOPED
 
-It was fun creating this, but now I'm going to use https://wezterm.org in combination
-with https://github.com/noctuid/tdrop to achieve the same effect and more.
+It was fun creating this, but now I'm using https://wezterm.org in combination
+with https://crates.io/crate/xpop to achieve the same effect.
 
 # Zoha
 
